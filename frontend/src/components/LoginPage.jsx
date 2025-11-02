@@ -1,12 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { API_ENDPOINTS } from '../config/api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const handleSubmit = (e) => {
+  // Check for errors in URL params
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'auth_failed') {
+      setError('Authentication failed. Please try again.');
+    }
+  }, [searchParams]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login submitted:', { email, password });
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store token in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    // Redirect to backend Google OAuth endpoint
+    window.location.href = API_ENDPOINTS.GOOGLE_AUTH;
   };
 
   return (
@@ -129,7 +178,11 @@ const LoginPage = () => {
 
             {/* Social Login Buttons */}
             <div className="space-y-3 mb-6">
-              <button className="w-full bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-colors">
+              <button 
+                onClick={handleGoogleLogin}
+                type="button"
+                className="w-full bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-colors"
+              >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
@@ -175,6 +228,13 @@ const LoginPage = () => {
                 <span className="px-4 bg-gray-900 text-gray-400">or continue with email</span>
               </div>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
 
             {/* Email/Password Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -246,9 +306,10 @@ const LoginPage = () => {
 
               <button
                 type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                disabled={loading}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
 
