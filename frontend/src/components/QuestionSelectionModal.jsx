@@ -125,34 +125,40 @@ const QuestionSelectionModal = ({ isOpen, onClose, onSelectQuestion }) => {
             </div>
 
             {/* Topic Filter */}
-            <div>
+            <div className="relative z-20">
               <label className="block text-sm font-semibold text-gray-300 mb-2">Topic</label>
               <select
                 value={selectedTopic}
                 onChange={(e) => setSelectedTopic(e.target.value)}
-                className="w-full bg-[#1a1f3a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-cyan-500 cursor-pointer"
+                className="w-full bg-[#1a1f3a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 cursor-pointer appearance-none"
               >
                 {topics.map((topic) => (
-                  <option key={topic} value={topic}>
+                  <option key={topic} value={topic} className="bg-[#1a1f3a] text-white">
                     {topic}
                   </option>
                 ))}
               </select>
+              <svg className="absolute right-3 top-10 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
             </div>
 
             {/* Difficulty Filter */}
-            <div>
+            <div className="relative z-20">
               <label className="block text-sm font-semibold text-gray-300 mb-2">Difficulty</label>
               <select
                 value={selectedDifficulty}
                 onChange={(e) => setSelectedDifficulty(e.target.value)}
-                className="w-full bg-[#1a1f3a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-cyan-500 cursor-pointer"
+                className="w-full bg-[#1a1f3a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 cursor-pointer appearance-none"
               >
-                <option value="All">All</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
+                <option value="All" className="bg-[#1a1f3a] text-white">All</option>
+                <option value="Easy" className="bg-[#1a1f3a] text-white">Easy</option>
+                <option value="Medium" className="bg-[#1a1f3a] text-white">Medium</option>
+                <option value="Hard" className="bg-[#1a1f3a] text-white">Hard</option>
               </select>
+              <svg className="absolute right-3 top-10 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
             </div>
           </div>
         </div>
