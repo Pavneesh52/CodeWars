@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
+import QuestionSelectionModal from './QuestionSelectionModal';
 
 const TargetPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [user, setUser] = useState(null);
   const [difficulty, setDifficulty] = useState('Medium');
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
 
   useEffect(() => {
     const tokenFromUrl = searchParams.get('token');
@@ -139,7 +141,10 @@ const TargetPage = () => {
                 <option value="Medium">Medium</option>
                 <option value="Hard">Hard</option>
               </select>
-              <button className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
+              <button 
+                onClick={() => setShowQuestionModal(true)}
+                className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+              >
                 Create Room
               </button>
             </div>
@@ -287,6 +292,16 @@ const TargetPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Question Selection Modal */}
+      <QuestionSelectionModal
+        isOpen={showQuestionModal}
+        onClose={() => setShowQuestionModal(false)}
+        onSelectQuestion={(question) => {
+          setShowQuestionModal(false);
+          navigate(`/coding/${question._id}`);
+        }}
+      />
     </div>
   );
 };
