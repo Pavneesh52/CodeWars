@@ -59,10 +59,10 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#1a2332] via-[#2a3f5f] to-[#1f3a52] flex items-center justify-center p-4">
       <div className="w-full max-w-6xl grid md:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-2xl">
-        {/* Left Panel - Purple Gradient */}
-        <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-12 text-white">
+        {/* Left Panel - Blue-Gray Gradient */}
+        <div className="bg-gradient-to-br from-[#2a3f5f] to-[#1f3a52] p-12 text-white">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-12">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2.5">
@@ -263,7 +263,7 @@ const LoginPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent placeholder-gray-500"
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2a3f5f] focus:border-transparent placeholder-gray-500"
                   />
                 </div>
               </div>
@@ -293,13 +293,13 @@ const LoginPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent placeholder-gray-500"
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2a3f5f] focus:border-transparent placeholder-gray-500"
                   />
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <a href="#" className="text-sm text-purple-400 hover:text-purple-300">
+                <a href="#" className="text-sm text-blue-300 hover:text-blue-200">
                   Forgot password?
                 </a>
               </div>
@@ -307,7 +307,7 @@ const LoginPage = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#2a3f5f] hover:bg-[#1f3a52] text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Signing In...' : 'Sign In'}
               </button>
@@ -316,7 +316,7 @@ const LoginPage = () => {
             {/* Sign Up Link */}
             <p className="text-center text-gray-400 mt-6">
               Don't have an account?{' '}
-              <a href="#" className="text-purple-400 hover:text-purple-300 font-medium">
+              <a href="#" className="text-blue-300 hover:text-blue-200 font-medium">
                 Sign Up
               </a>
             </p>
