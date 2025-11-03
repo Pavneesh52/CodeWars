@@ -9,6 +9,9 @@ export const API_ENDPOINTS = {
   ME: `${API_BASE_URL}/auth/me`,
   GOOGLE_AUTH: `${API_BASE_URL}/auth/google`,
   AUTH_STATUS: `${API_BASE_URL}/auth/status`,
+  
+  // Questions endpoints
+  QUESTIONS: `${API_BASE_URL}/questions`,
 };
 
 export default API_BASE_URL;
