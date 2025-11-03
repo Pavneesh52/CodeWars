@@ -88,6 +88,9 @@ const TargetPage = () => {
                 Problems 📋
               </button>
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                Challenges 📋
+              </a>
+              <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 Leaderboard 🏆
               </a>
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
