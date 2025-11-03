@@ -10,6 +10,7 @@ import session from 'express-session';
 import connectDB from './config/database.js';
 import passportConfig, { configureStrategies } from './config/passport.js';
 import authRoutes from './routes/authRoutes.js';
+import questionRoutes from './routes/questionRoutes.js';
 
 // Connect to database
 connectDB();
@@ -56,6 +57,7 @@ app.use(passportConfig.session());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/questions', questionRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
