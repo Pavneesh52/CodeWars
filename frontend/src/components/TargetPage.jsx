@@ -78,9 +78,12 @@ const TargetPage = () => {
 
             {/* Navigation Links */}
             <div className="flex items-center gap-8">
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                Active Rooms 🔥
-              </a>
+              <button 
+                onClick={() => navigate('/active-battles')}
+                className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
+              >
+                Active Battles 🔥
+              </button>
               <button 
                 onClick={() => navigate('/problems')}
                 className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
