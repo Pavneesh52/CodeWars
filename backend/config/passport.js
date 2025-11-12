@@ -33,6 +33,9 @@ const configureStrategies = () => {
     // GOOGLE_CALLBACK_URL=http://localhost:3001/api/auth/google/callback
     console.warn('Warning: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not set. Skipping GoogleStrategy configuration. Google OAuth will be disabled.');
   } else {
+    console.log('✓ Google OAuth configured with:');
+    console.log('  Client ID:', GOOGLE_CLIENT_ID);
+    console.log('  Callback URL:', GOOGLE_CALLBACK_URL);
     passport.use(
       new GoogleStrategy(
         {

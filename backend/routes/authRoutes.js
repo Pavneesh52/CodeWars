@@ -27,10 +27,33 @@ router.get(
 
 router.get(
   '/google/callback',
-  passport.authenticate('google', { 
-    failureRedirect: `${process.env.FRONTEND_URL}?error=auth_failed`,
-    session: true
-  }),
+  (req, res, next) => {
+    passport.authenticate('google', { 
+      failureRedirect: `${process.env.FRONTEND_URL}?error=auth_failed`,
+      session: true
+    }, (err, user, info) => {
+      if (err) {
+        console.error('Google OAuth Error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Unauthorized',
+          stack: err.stack,
+          details: err.message
+        });
+      }
+      if (!user) {
+        console.error('Google OAuth - No user returned:', info);
+        return res.redirect(`${process.env.FRONTEND_URL}?error=auth_failed`);
+      }
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error('Login error:', loginErr);
+          return res.redirect(`${process.env.FRONTEND_URL}?error=auth_failed`);
+        }
+        return next();
+      });
+    })(req, res, next);
+  },
   googleAuthSuccess
 );
 

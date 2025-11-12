@@ -1,36 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 
-const LoginPage = () => {
+const RegisterPage = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  // Check for errors in URL params
-  useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam === 'auth_failed') {
-      setError('Authentication failed. Please try again.');
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validation
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch(API_ENDPOINTS.LOGIN, {
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
 
       const data = await response.json();
@@ -43,11 +53,11 @@ const LoginPage = () => {
         // Navigate to dashboard
         navigate('/dashboard');
       } else {
-        setError(data.message || 'Login failed');
+        setError(data.message || 'Registration failed');
       }
     } catch (err) {
       setError('Network error. Please try again.');
-      console.error('Login error:', err);
+      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }
@@ -85,12 +95,12 @@ const LoginPage = () => {
 
           {/* Main Heading */}
           <h1 className="text-4xl font-bold mb-6 leading-tight">
-            Start Your Coding Journey Today
+            Join Our Developer Community
           </h1>
 
           {/* Description */}
           <p className="text-purple-100 mb-10 text-lg leading-relaxed">
-            Join thousands of developers learning, building, and collaborating on real-world projects. Access premium coding tutorials, interactive challenges, and a supportive community.
+            Create your account and unlock access to premium coding tutorials, interactive challenges, and a supportive community of developers.
           </p>
 
           {/* Features List */}
@@ -112,9 +122,9 @@ const LoginPage = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Interactive Learning</h3>
+                <h3 className="font-semibold text-lg mb-1">Free to Start</h3>
                 <p className="text-purple-100 text-sm">
-                  Learn by doing with hands-on coding challenges and projects
+                  No credit card required. Start learning immediately
                 </p>
               </div>
             </div>
@@ -136,9 +146,9 @@ const LoginPage = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Expert Mentorship</h3>
+                <h3 className="font-semibold text-lg mb-1">Track Your Progress</h3>
                 <p className="text-purple-100 text-sm">
-                  Get guidance from industry professionals and experienced developers
+                  Monitor your learning journey with detailed analytics
                 </p>
               </div>
             </div>
@@ -160,9 +170,9 @@ const LoginPage = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Career Growth</h3>
+                <h3 className="font-semibold text-lg mb-1">Build Your Portfolio</h3>
                 <p className="text-purple-100 text-sm">
-                  Build your portfolio and connect with hiring companies
+                  Showcase your projects and achievements to employers
                 </p>
               </div>
             </div>
@@ -173,8 +183,8 @@ const LoginPage = () => {
         <div className="bg-gray-900 p-12 flex flex-col justify-center">
           <div className="max-w-md w-full mx-auto">
             {/* Welcome Text */}
-            <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-            <p className="text-gray-400 mb-8">Sign in to continue your journey</p>
+            <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
+            <p className="text-gray-400 mb-8">Start your coding journey today</p>
 
             {/* Social Login Buttons */}
             <div className="space-y-3 mb-6">
@@ -203,20 +213,6 @@ const LoginPage = () => {
                 </svg>
                 Continue with Google
               </button>
-
-              <button className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                </svg>
-                Continue with GitHub
-              </button>
-
-              <button className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.546 10.93L13.067.452c-.604-.603-1.582-.603-2.188 0L8.708 2.627l2.76 2.76c.645-.215 1.379-.07 1.889.441.516.515.658 1.258.438 1.9l2.658 2.66c.645-.223 1.387-.078 1.9.435.721.72.721 1.884 0 2.604-.719.719-1.881.719-2.6 0-.539-.541-.674-1.337-.404-1.996L12.86 8.955v6.525c.176.086.342.203.488.348.713.721.713 1.883 0 2.6-.719.721-1.889.721-2.609 0-.719-.719-.719-1.879 0-2.598.182-.18.387-.316.605-.406V8.835c-.217-.091-.424-.222-.6-.401-.545-.545-.676-1.342-.396-2.009L7.636 3.7.45 10.881c-.6.605-.6 1.584 0 2.189l10.48 10.477c.604.604 1.582.604 2.186 0l10.43-10.43c.605-.603.605-1.582 0-2.187"/>
-                </svg>
-                Continue with GitLab
-              </button>
             </div>
 
             {/* Divider */}
@@ -225,7 +221,7 @@ const LoginPage = () => {
                 <div className="w-full border-t border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-gray-900 text-gray-400">or continue with email</span>
+                <span className="px-4 bg-gray-900 text-gray-400">or register with email</span>
               </div>
             </div>
 
@@ -236,8 +232,38 @@ const LoginPage = () => {
               </div>
             )}
 
-            {/* Email/Password Form */}
+            {/* Registration Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg 
+                      className="h-5 w-5 text-gray-500" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" 
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="John Doe"
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2a3f5f] focus:border-transparent placeholder-gray-500"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-gray-300 text-sm font-medium mb-2">
                   Email
@@ -296,12 +322,37 @@ const LoginPage = () => {
                     className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2a3f5f] focus:border-transparent placeholder-gray-500"
                   />
                 </div>
+                <p className="text-gray-500 text-xs mt-1">Must be at least 6 characters</p>
               </div>
 
-              <div className="flex justify-end">
-                <a href="#" className="text-sm text-blue-300 hover:text-blue-200">
-                  Forgot password?
-                </a>
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg 
+                      className="h-5 w-5 text-gray-500" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" 
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2a3f5f] focus:border-transparent placeholder-gray-500"
+                  />
+                </div>
               </div>
 
               <button
@@ -309,15 +360,15 @@ const LoginPage = () => {
                 disabled={loading}
                 className="w-full bg-[#2a3f5f] hover:bg-[#1f3a52] text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Signing In...' : 'Sign In'}
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
 
-            {/* Sign Up Link */}
+            {/* Sign In Link */}
             <p className="text-center text-gray-400 mt-6">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-300 hover:text-blue-200 font-medium">
-                Sign Up
+              Already have an account?{' '}
+              <Link to="/" className="text-blue-300 hover:text-blue-200 font-medium">
+                Sign In
               </Link>
             </p>
 
@@ -335,4 +386,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
