@@ -26,11 +26,16 @@ const CodingPlatform = () => {
 
   const fetchQuestion = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.QUESTIONS}/${questionId}`);
+      console.log('Fetching problem with ID:', questionId);
+      // Fetch from new problems API
+      const response = await fetch(`http://localhost:3001/api/problems/${questionId}`);
       const data = await response.json();
+      console.log('API Response:', data);
       if (data.success) {
         setQuestion(data.data);
-        setCode(data.data.starterCode);
+        setCode(`// Problem: ${data.data.title}\n// TODO: Write your solution here\n`);
+      } else {
+        console.error('Problem not found:', data.message);
       }
     } catch (error) {
       console.error('Error fetching question:', error);
@@ -241,7 +246,7 @@ const CodingPlatform = () => {
                   {/* Description */}
                   <div>
                     <h2 className="text-lg font-bold text-white mb-3">Description</h2>
-                    <p className="text-gray-300 leading-relaxed">{question.description}</p>
+                    <p className="text-gray-300 leading-relaxed">{question.statement || question.description}</p>
                   </div>
 
                   {/* Examples */}
@@ -279,7 +284,7 @@ const CodingPlatform = () => {
                   <div>
                     <h2 className="text-lg font-bold text-white mb-3">Topics</h2>
                     <div className="flex flex-wrap gap-2">
-                      {question.topics.map((topic) => (
+                      {(question.topics || [question.topic]).map((topic) => (
                         <span
                           key={topic}
                           className="px-3 py-1 rounded-full text-sm font-semibold bg-purple-500/20 text-purple-300"
@@ -295,28 +300,35 @@ const CodingPlatform = () => {
               {activeTab === 'testcases' && (
                 <div className="space-y-4">
                   <h2 className="text-lg font-bold text-white mb-4">Test Cases</h2>
-                  {question.testCases && question.testCases.map((testCase, index) => (
-                    <div key={index} className="bg-[#0f1425] border border-gray-700 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-cyan-400">Test Case {index + 1}</h3>
-                        <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
-                          {index === 0 ? 'Example' : 'Test'}
-                        </span>
+                  {question.testCases && question.testCases.map((testCase, index) => {
+                    // Handle both string and object test cases
+                    const isStringTestCase = typeof testCase === 'string';
+                    const testCaseObj = isStringTestCase ? { input: testCase, output: '' } : testCase;
+                    return (
+                      <div key={index} className="bg-[#0f1425] border border-gray-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-cyan-400">Test Case {index + 1}</h3>
+                          <span className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300">
+                            {index === 0 ? 'Example' : 'Test'}
+                          </span>
+                        </div>
+                        <div className="mb-3">
+                          <p className="text-gray-400 text-sm font-semibold mb-1">Input:</p>
+                          <p className="text-cyan-300 font-mono text-sm bg-[#0a0e27] p-2 rounded whitespace-pre-wrap break-words">
+                            {testCaseObj.input}
+                          </p>
+                        </div>
+                        {testCaseObj.output && (
+                          <div>
+                            <p className="text-gray-400 text-sm font-semibold mb-1">Output:</p>
+                            <p className="text-green-300 font-mono text-sm bg-[#0a0e27] p-2 rounded whitespace-pre-wrap break-words">
+                              {testCaseObj.output}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <div className="mb-3">
-                        <p className="text-gray-400 text-sm font-semibold mb-1">Input:</p>
-                        <p className="text-cyan-300 font-mono text-sm bg-[#0a0e27] p-2 rounded">
-                          {testCase.input}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm font-semibold mb-1">Output:</p>
-                        <p className="text-green-300 font-mono text-sm bg-[#0a0e27] p-2 rounded">
-                          {testCase.output}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 

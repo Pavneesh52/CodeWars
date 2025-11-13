@@ -18,6 +18,7 @@ import authRoutes from './routes/authRoutes.js';
 import questionRoutes from './routes/questionRoutes.js';
 import codeRoutes from './routes/codeRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
+import problemRoutes from './routes/problemRoutes.js';
 
 // Connect to database
 connectDB();
@@ -67,6 +68,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/code', codeRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/problems', problemRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
