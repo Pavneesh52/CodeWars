@@ -16,6 +16,9 @@ const CodingPlatform = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [room, setRoom] = useState(null);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [submissions, setSubmissions] = useState([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [isSolved, setIsSolved] = useState(false);
 
   useEffect(() => {
     fetchQuestion();
@@ -104,6 +107,55 @@ const CodingPlatform = () => {
     alert('Code submitted! In a real application, this would be saved to the backend.');
   };
 
+  const fetchSubmissions = async () => {
+    try {
+      setLoadingSubmissions(true);
+      const response = await fetch('http://localhost:3001/api/submissions');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('All submissions:', data.data);
+        console.log('Current questionId:', questionId);
+        
+        // Filter submissions for current problem (try multiple matching strategies)
+        const problemSubmissions = data.data.filter(sub => {
+          // Try exact match
+          if (sub.problemId === questionId) return true;
+          // Try string comparison
+          if (String(sub.problemId) === String(questionId)) return true;
+          // Try matching if questionId is part of problemId
+          if (sub.problemId && sub.problemId.includes && sub.problemId.includes(questionId)) return true;
+          // Try matching if problemId is part of questionId
+          if (questionId && questionId.includes && questionId.includes(String(sub.problemId))) return true;
+          return false;
+        });
+        
+        console.log('Filtered submissions:', problemSubmissions);
+        setSubmissions(problemSubmissions);
+        
+        // Check if problem is solved (has at least one successful submission)
+        const hasSuccessfulSubmission = problemSubmissions.some(sub => sub.status === 'SUCCESS');
+        setIsSolved(hasSuccessfulSubmission);
+      } else {
+        console.error('Failed to fetch submissions');
+      }
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
+  // Fetch submissions when tab changes to submissions AND on initial load
+  useEffect(() => {
+    fetchSubmissions(); // Always fetch on component load
+  }, [questionId]);
+
+  useEffect(() => {
+    if (activeTab === 'submissions') {
+      fetchSubmissions(); // Also refresh when clicking submissions tab
+    }
+  }, [activeTab, questionId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] to-[#1a2040] text-white flex items-center justify-center">
@@ -135,7 +187,18 @@ const CodingPlatform = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <h1 className="text-xl font-bold">{question.title}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-bold">{question.title}</h1>
+                {isSolved && (
+                  <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                    ✅ Solved
+                  </span>
+                )}
+                {/* Debug info - remove later */}
+                <span className="bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full text-xs">
+                  Debug: {isSolved ? 'SOLVED' : 'NOT SOLVED'} (ID: {questionId})
+                </span>
+              </div>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                 question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
                 question.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -333,8 +396,128 @@ const CodingPlatform = () => {
               )}
 
               {activeTab === 'submissions' && (
-                <div className="text-gray-400">
-                  <p>No submissions yet. Submit your solution to see it here.</p>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Your Submissions</h3>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          // Debug: Show all submissions
+                          fetch('http://localhost:3001/api/submissions')
+                            .then(res => res.json())
+                            .then(data => {
+                              console.log('All submissions in DB:', data.data);
+                              const successfulSubmissions = data.data.filter(sub => sub.status === 'SUCCESS');
+                              console.log('Successful submissions:', successfulSubmissions);
+                              alert(`Total submissions: ${data.data.length}\nSuccessful: ${successfulSubmissions.length}\nCheck console for details`);
+                            });
+                        }}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                      >
+                        🔍 Debug All
+                      </button>
+                      <button
+                        onClick={() => {
+                          fetchSubmissions();
+                          setTimeout(() => {
+                            alert(`Current solved status: ${isSolved ? 'SOLVED' : 'NOT SOLVED'}\nQuestion ID: ${questionId}\nSubmissions found: ${submissions.length}`);
+                          }, 1000);
+                        }}
+                        className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                      >
+                        🎯 Check Status
+                      </button>
+                      <button
+                        onClick={fetchSubmissions}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                      >
+                        🔄 Refresh
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {loadingSubmissions ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                      <p className="text-gray-400">Loading submissions...</p>
+                    </div>
+                  ) : submissions.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>No submissions yet for this problem.</p>
+                      <p className="text-sm mt-2">Submit your solution to see it here.</p>
+                      <p className="text-xs mt-2 text-gray-500">Debug: Current questionId = {questionId}</p>
+                      <p className="text-xs mt-1 text-gray-500">Check browser console for more info</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {submissions.map((submission, index) => (
+                        <div
+                          key={submission._id}
+                          className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">
+                                {submission.language === 'javascript' && '🟨'}
+                                {submission.language === 'python' && '🐍'}
+                                {submission.language === 'cpp' && '⚙️'}
+                                {submission.language === 'java' && '☕'}
+                              </span>
+                              <span className="text-sm font-medium capitalize">
+                                {submission.language}
+                              </span>
+                            </div>
+                            <div className={`text-xs px-2 py-1 rounded font-medium ${
+                              submission.status === 'SUCCESS' ? 'text-green-400 bg-green-900/30' :
+                              submission.status === 'COMPILATION_ERROR' ? 'text-red-400 bg-red-900/30' :
+                              submission.status === 'RUNTIME_ERROR' ? 'text-orange-400 bg-orange-900/30' :
+                              'text-gray-400 bg-gray-900/30'
+                            }`}>
+                              {submission.status === 'SUCCESS' && '✅'}
+                              {submission.status === 'COMPILATION_ERROR' && '❌'}
+                              {submission.status === 'RUNTIME_ERROR' && '💥'}
+                              {submission.status !== 'SUCCESS' && submission.status !== 'COMPILATION_ERROR' && submission.status !== 'RUNTIME_ERROR' && '❓'}
+                              {' '}{submission.status.replace('_', ' ')}
+                            </div>
+                          </div>
+                          
+                          <div className="bg-gray-900 rounded p-3 mb-2">
+                            <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
+                              {submission.code}
+                            </pre>
+                          </div>
+                          
+                          {submission.output && (
+                            <div className="text-sm text-green-400 mb-1">
+                              <strong>Output:</strong> {submission.output}
+                            </div>
+                          )}
+                          
+                          {submission.error && (
+                            <div className="text-sm text-red-400 mb-1">
+                              <strong>Error:</strong> {
+                                typeof submission.error === 'object' 
+                                  ? submission.error.message || submission.error.type 
+                                  : submission.error
+                              }
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-gray-500">
+                            {new Date(submission.submittedAt).toLocaleString()}
+                          </div>
+                          
+                          {submission.testResults && submission.testResults.length > 0 && (
+                            <div className="mt-2 text-sm">
+                              <span className="text-green-400">
+                                ✅ {submission.passedTests}/{submission.totalTests} tests passed
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -347,8 +530,10 @@ const CodingPlatform = () => {
               language="javascript"
               onChange={setCode}
               onRun={runCode}
+              onSubmit={fetchSubmissions}
               theme="vs-dark"
               questionId={questionId}
+              problem={question}
             />
           </div>
         </div>
