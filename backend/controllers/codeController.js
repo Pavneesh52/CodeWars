@@ -499,6 +499,61 @@ export const submitCode = async (req, res) => {
 
       await submission.save();
       console.log(`✅ Submission saved for user ${userId}, problem ${questionId}`);
+
+      // Update user stats if submission is successful
+      if (status === 'SUCCESS' && userId !== 'default_user') {
+        try {
+          const User = (await import('../models/User.js')).default;
+          const Problem = (await import('../models/Problem.js')).default;
+          
+          console.log(`📊 Attempting to update stats for user: ${userId}, problem: ${questionId}`);
+          
+          const user = await User.findById(userId);
+          if (!user) {
+            console.error(`❌ User not found: ${userId}`);
+            return;
+          }
+          
+          const problem = await Problem.findById(questionId);
+          if (!problem) {
+            console.error(`❌ Problem not found: ${questionId}`);
+            console.log(`📝 Available problem fields: _id, title, difficulty, topic`);
+            // Try to find problem by other means
+            const allProblems = await Problem.find().limit(1);
+            if (allProblems.length > 0) {
+              console.log(`📝 Sample problem ID format: ${allProblems[0]._id}`);
+            }
+            return;
+          }
+          
+          const verdict = status === 'SUCCESS' ? 'Accepted' : 'Wrong Answer';
+          console.log(`📝 Recording submission: verdict=${verdict}, difficulty=${problem.difficulty}`);
+          
+          const updatedUser = await user.recordSubmission(
+            questionId,
+            verdict,
+            problem.difficulty,
+            language,
+            0, // timeTaken - can be calculated if needed
+            code,
+            problem.title, // problemTitle
+            problem.topic  // topic
+          );
+          console.log(`✅ User stats updated for ${userId}`);
+          console.log(`   Total Solved: ${updatedUser.totalProblemsSolved}`);
+          console.log(`   Easy: ${updatedUser.easySolved}, Medium: ${updatedUser.mediumSolved}, Hard: ${updatedUser.hardSolved}`);
+          
+          // Verify by fetching fresh from DB
+          const verifyUser = await User.findById(userId);
+          console.log(`🔍 Verification - Fresh fetch from DB:`);
+          console.log(`   Total Solved: ${verifyUser.totalProblemsSolved}`);
+          console.log(`   Easy: ${verifyUser.easySolved}, Medium: ${verifyUser.mediumSolved}, Hard: ${verifyUser.hardSolved}`);
+        } catch (statsError) {
+          console.error('⚠️ Error updating user stats:', statsError);
+          console.error('Stack:', statsError.stack);
+          // Continue even if stats update fails
+        }
+      }
     } catch (saveError) {
       console.error('❌ Error saving submission:', saveError);
       // Continue with response even if saving fails
