@@ -26,10 +26,12 @@ const ProblemsPage = () => {
 
   const fetchTopics = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.QUESTIONS}/topics/all`);
+      const response = await fetch('http://localhost:3001/api/problems');
       const data = await response.json();
-      if (data.success) {
-        setTopics(['All', ...data.data]);
+      if (data.success && data.data) {
+        // Extract unique topics from problems
+        const uniqueTopics = [...new Set(data.data.map(p => p.topic))];
+        setTopics(['All', ...uniqueTopics]);
       }
     } catch (error) {
       console.error('Error fetching topics:', error);
@@ -39,35 +41,40 @@ const ProblemsPage = () => {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      let url = API_ENDPOINTS.QUESTIONS;
-      const params = new URLSearchParams();
-
-      if (selectedTopic !== 'All') {
-        params.append('topic', selectedTopic);
-      }
-
-      if (selectedDifficulty !== 'All') {
-        params.append('difficulty', selectedDifficulty);
-      }
-
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
-
-      if (params.toString()) {
-        url += '?' + params.toString();
-      }
-
+      let url = 'http://localhost:3001/api/problems';
+      
+      // Fetch all problems first
       const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
+      let data = await response.json();
       
-      if (data.success) {
-        setQuestions(data.data);
+      if (data.success && data.data) {
+        let filteredProblems = data.data;
+        
+        // Filter by topic
+        if (selectedTopic !== 'All') {
+          filteredProblems = filteredProblems.filter(p => p.topic === selectedTopic);
+        }
+        
+        // Filter by difficulty
+        if (selectedDifficulty !== 'All') {
+          filteredProblems = filteredProblems.filter(p => p.difficulty === selectedDifficulty);
+        }
+        
+        // Filter by search term
+        if (searchTerm) {
+          const lowerSearchTerm = searchTerm.toLowerCase();
+          filteredProblems = filteredProblems.filter(p => 
+            p.title.toLowerCase().includes(lowerSearchTerm) ||
+            p.statement.toLowerCase().includes(lowerSearchTerm)
+          );
+        }
+        
+        setQuestions(filteredProblems);
       } else {
         console.error('API returned success: false', data);
         setQuestions([]);
@@ -268,36 +275,37 @@ const ProblemsPage = () => {
             <div className="divide-y divide-gray-700">
               {questions.map((question) => (
                 <div
-                  key={question._id}
+                  key={question._id || question.problemId}
                   className="px-8 py-6 hover:bg-[#1a1f3a] transition-colors cursor-pointer border-l-4 border-transparent hover:border-cyan-500"
-                  onClick={() => navigate(`/coding/${question._id}`)}
+                  onClick={() => navigate(`/coding/${question._id || question.problemId}`)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-white mb-2">
-                        {question.title}
-                      </h3>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-gray-500 text-sm font-mono">#{question.problemId}</span>
+                        <h3 className="text-xl font-semibold text-white">
+                          {question.title}
+                        </h3>
+                      </div>
                       <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                        {question.description}
+                        {question.statement}
                       </p>
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(question.difficulty)}`}>
                           {question.difficulty}
                         </span>
-                        {question.topics.map((topic) => (
-                          <span
-                            key={topic}
-                            className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300"
-                          >
-                            {topic}
-                          </span>
-                        ))}
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300">
+                          {question.topic}
+                        </span>
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300">
+                          {question.testCases?.length || 0} test cases
+                        </span>
                       </div>
                     </div>
                     <div className="ml-6 text-right">
                       <div className="text-gray-400 text-sm">
-                        <div className="mb-1">{question.submissions} submissions</div>
-                        <div className="text-cyan-400 font-semibold">{question.acceptanceRate}% AC</div>
+                        <div className="mb-1 text-xs">DSA Problem</div>
+                        <div className="text-cyan-400 font-semibold">Solve Now →</div>
                       </div>
                     </div>
                   </div>

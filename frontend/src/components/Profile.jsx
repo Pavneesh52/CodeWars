@@ -6,78 +6,14 @@ const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: 'Alex Johnson', username: 'alexcodes' });
   const [userStats, setUserStats] = useState({
-    problemsSolved: 247,
-    contestsWon: 18,
-    currentStreak: 12,
-    memberSince: 'January 2024'
+    totalProblemsSolved: 0,
+    easySolved: 0,
+    mediumSolved: 0,
+    hardSolved: 0,
+    memberSince: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
   });
-
-  const [recentProblems] = useState([
-    {
-      name: 'Two Sum',
-      difficulty: 'Easy',
-      category: 'Arrays',
-      timeSpent: '12 min',
-      timeAgo: '2 hours ago',
-      status: 'solved'
-    },
-    {
-      name: 'Binary Tree Traversal',
-      difficulty: 'Medium',
-      category: 'Trees',
-      timeSpent: '28 min',
-      timeAgo: '5 hours ago',
-      status: 'solved'
-    },
-    {
-      name: 'Dynamic Programming - Knapsack',
-      difficulty: 'Hard',
-      category: 'Dynamic Programming',
-      timeSpent: '45 min',
-      timeAgo: '1 day ago',
-      status: 'solved'
-    },
-    {
-      name: 'Valid Parentheses',
-      difficulty: 'Easy',
-      category: 'Stack',
-      timeSpent: '8 min',
-      timeAgo: '1 day ago',
-      status: 'solved'
-    },
-    {
-      name: 'Merge Intervals',
-      difficulty: 'Medium',
-      category: 'Arrays',
-      timeSpent: '22 min',
-      timeAgo: '2 days ago',
-      status: 'solved'
-    },
-    {
-      name: 'Longest Palindromic Substring',
-      difficulty: 'Medium',
-      category: 'Strings',
-      timeSpent: '35 min',
-      timeAgo: '2 days ago',
-      status: 'solved'
-    },
-    {
-      name: 'Maximum Subarray',
-      difficulty: 'Medium',
-      category: 'Arrays',
-      timeSpent: '18 min',
-      timeAgo: '5 days ago',
-      status: 'solved'
-    },
-    {
-      name: 'N-Queens Problem',
-      difficulty: 'Hard',
-      category: 'Backtracking',
-      timeSpent: '60 min',
-      timeAgo: '6 days ago',
-      status: 'solved'
-    }
-  ]);
+  const [recentProblems, setRecentProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [contestHistory] = useState([
     {
@@ -142,26 +78,105 @@ const Profile = () => {
     }
   ]);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        // Set a default user if parsing fails
-        setUser({ name: 'Alex Johnson', username: 'alexcodes' });
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get user from localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
       }
-    } else {
-      // Set a default user if no user data is found
-      setUser({ name: 'Alex Johnson', username: 'alexcodes' });
-    }
 
-    const token = localStorage.getItem('token');
-    // Comment out token validation for now to test the profile page
-    // if (!token) {
-    //   navigate('/');
-    // }
+      // Fetch user stats from backend
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/');
+        return;
+      }
+
+      // Get current user ID from auth
+      const authResponse = await fetch('http://localhost:3001/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!authResponse.ok) {
+        navigate('/');
+        return;
+      }
+
+      const authData = await authResponse.json();
+      const userId = authData.data._id;
+      console.log('📊 Fetching stats for user:', userId);
+
+      // Fetch user stats
+      const statsResponse = await fetch(`http://localhost:3001/api/user/${userId}/stats`);
+      const statsData = await statsResponse.json();
+      console.log('📊 Stats API Response:', statsData);
+
+      if (statsData.success) {
+        console.log('✅ Stats received:', statsData.data.stats);
+        setUserStats({
+          totalProblemsSolved: statsData.data.stats.totalProblemsSolved || 0,
+          easySolved: statsData.data.stats.easySolved || 0,
+          mediumSolved: statsData.data.stats.mediumSolved || 0,
+          hardSolved: statsData.data.stats.hardSolved || 0,
+          memberSince: new Date(statsData.data.user.memberSince).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+        });
+      } else {
+        console.error('❌ Stats API returned error:', statsData);
+      }
+
+      // Fetch solved problems from user-solved collection
+      try {
+        const solvedResponse = await fetch(`http://localhost:3001/api/user/${userId}/solved?limit=10`);
+        const solvedData = await solvedResponse.json();
+        console.log('📚 Solved Problems API Response:', solvedData);
+
+        if (solvedData.success && solvedData.data && solvedData.data.length > 0) {
+          const problems = solvedData.data.map(solved => ({
+            name: solved.title || 'Unknown Problem',
+            difficulty: solved.difficulty || 'Medium',
+            category: solved.topic || 'General',
+            timeSpent: solved.timeTaken ? `${Math.round(solved.timeTaken / 1000)} sec` : 'N/A',
+            timeAgo: new Date(solved.solvedAt).toLocaleDateString(),
+            status: 'Accepted',
+            language: solved.language
+          }));
+          console.log('✅ Solved problems received:', problems);
+          setRecentProblems(problems);
+        } else {
+          console.log('ℹ️ No solved problems found');
+          setRecentProblems([]);
+        }
+      } catch (solvedError) {
+        console.error('❌ Error fetching solved problems:', solvedError);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log('🔄 Profile component mounted, fetching data...');
+    fetchUserData();
+    
+    // Also set up an interval to refresh every 5 seconds
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing profile data...');
+      fetchUserData();
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -247,6 +262,15 @@ const Profile = () => {
 
             {/* Right Side Buttons */}
             <div className="flex items-center gap-3">
+              <button 
+                onClick={fetchUserData}
+                className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
+                title="Refresh stats"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
               <button className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -313,31 +337,43 @@ const Profile = () => {
                     </div>
                     <span className="text-gray-400 text-sm">Problems Solved</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">{userStats.problemsSolved}</div>
+                  <div className="text-2xl font-bold text-white">{userStats.totalProblemsSolved}</div>
+                </div>
+
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-400 text-sm">Easy Solved</span>
+                  </div>
+                  <div className="text-2xl font-bold text-white">{userStats.easySolved}</div>
                 </div>
 
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <span className="text-gray-400 text-sm">Contests Won</span>
+                    <span className="text-gray-400 text-sm">Medium Solved</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">{userStats.contestsWon}</div>
+                  <div className="text-2xl font-bold text-white">{userStats.mediumSolved}</div>
                 </div>
 
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <span className="text-gray-400 text-sm">Current Streak</span>
+                    <span className="text-gray-400 text-sm">Hard Solved</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">{userStats.currentStreak} days</div>
+                  <div className="text-2xl font-bold text-white">{userStats.hardSolved}</div>
                 </div>
 
                 <div className="text-center">
@@ -368,33 +404,43 @@ const Profile = () => {
           </div>
 
           <div className="space-y-4">
-            {recentProblems.map((problem, index) => (
-              <div 
-                key={index}
-                className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">{problem.name}</h3>
-                    <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(problem.difficulty)}`}>
-                        {problem.difficulty}
-                      </span>
-                      <span className="text-gray-400 text-sm">{problem.category}</span>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="text-gray-400">Loading...</div>
+              </div>
+            ) : recentProblems.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-gray-400">No problems solved yet. Start solving problems to see them here!</div>
+              </div>
+            ) : (
+              recentProblems.map((problem, index) => (
+                <div 
+                  key={index}
+                  className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold mb-2">{problem.name}</h3>
+                      <div className="flex items-center gap-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(problem.difficulty)}`}>
+                          {problem.difficulty}
+                        </span>
+                        <span className="text-gray-400 text-sm">{problem.category}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 mb-1">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-gray-300 text-sm">{problem.timeSpent}</span>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2 mb-1">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-gray-300 text-sm">{problem.timeSpent}</span>
+                      </div>
+                      <div className="text-gray-400 text-xs">{problem.timeAgo}</div>
                     </div>
-                    <div className="text-gray-400 text-xs">{problem.timeAgo}</div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
