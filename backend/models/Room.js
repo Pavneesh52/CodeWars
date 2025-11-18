@@ -10,7 +10,7 @@ const roomSchema = new mongoose.Schema({
   },
   question: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Question',
+    ref: 'Problem',
     required: true
   },
   host: {
@@ -31,6 +31,11 @@ const roomSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  status: {
+    type: String,
+    enum: ['waiting', 'coding', 'completed'],
+    default: 'waiting'
   },
   createdAt: {
     type: Date,

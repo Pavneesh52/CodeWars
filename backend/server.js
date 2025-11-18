@@ -20,6 +20,7 @@ import codeRoutes from './routes/codeRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import problemRoutes from './routes/problemRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import submissionsRoutes from './routes/submissionsRoutes.js';
 
 // Import models to register them with Mongoose
 import User from './models/User.js';
@@ -76,6 +77,7 @@ app.use('/api/code', codeRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/problems', problemRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/submissions', submissionsRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

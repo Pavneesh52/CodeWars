@@ -36,7 +36,19 @@ const CodingPlatform = () => {
       console.log('API Response:', data);
       if (data.success) {
         setQuestion(data.data);
-        setCode(`// Problem: ${data.data.title}\n// TODO: Write your solution here\n`);
+        const cppBoilerplate = `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Problem: ${data.data.title}
+
+int main() {
+    // TODO: Write your solution here
+    
+    return 0;
+}`;
+        setCode(cppBoilerplate);
       } else {
         console.error('Problem not found:', data.message);
       }
@@ -194,10 +206,6 @@ const CodingPlatform = () => {
                     ✅ Solved
                   </span>
                 )}
-                {/* Debug info - remove later */}
-                <span className="bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full text-xs">
-                  Debug: {isSolved ? 'SOLVED' : 'NOT SOLVED'} (ID: {questionId})
-                </span>
               </div>
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                 question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
@@ -527,7 +535,7 @@ const CodingPlatform = () => {
           <div className="flex flex-col h-[calc(100vh-200px)]">
             <CodeEditor
               initialCode={code}
-              language="javascript"
+              language="cpp"
               onChange={setCode}
               onRun={runCode}
               onSubmit={fetchSubmissions}

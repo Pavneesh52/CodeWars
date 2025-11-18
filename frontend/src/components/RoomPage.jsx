@@ -44,6 +44,17 @@ const RoomPage = () => {
       if (data.success) {
         const currentRoom = data.data;
         
+        // Check if coding session has started
+        if (currentRoom.status === 'coding') {
+          // If room status changed to coding, redirect all participants
+          if (!room || room.status !== 'coding') {
+            if (currentRoom.question) {
+              navigate(`/coding/${currentRoom.question._id}?roomCode=${roomCode}`);
+            }
+            return;
+          }
+        }
+        
         // Check if new participant joined
         if (room && currentRoom.participants.length > previousParticipantCount) {
           // Find the new participant
@@ -166,9 +177,32 @@ const RoomPage = () => {
     }
   };
 
-  const handleStartCoding = () => {
-    if (room && room.question) {
-      navigate(`/coding/${room.question._id}?roomCode=${roomCode}`);
+  const handleStartCoding = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_ENDPOINTS.ROOMS}/${roomCode}/start`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Update room status locally
+        setRoom(data.data);
+        // Navigate to coding page
+        if (data.data.question) {
+          navigate(`/coding/${data.data.question._id}?roomCode=${roomCode}`);
+        }
+      } else {
+        setError(data.message || 'Failed to start coding session');
+      }
+    } catch (err) {
+      console.error('Error starting coding session:', err);
+      setError('Error starting coding session: ' + err.message);
     }
   };
 

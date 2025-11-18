@@ -1,6 +1,6 @@
 import express from 'express';
 import Room from '../models/Room.js';
-import Question from '../models/Question.js';
+import Problem from '../models/Problem.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -16,10 +16,10 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Question ID is required' });
     }
 
-    // Verify the question exists
-    const question = await Question.findById(questionId);
-    if (!question) {
-      return res.status(404).json({ success: false, message: 'Question not found' });
+    // Verify the problem exists
+    const problem = await Problem.findById(questionId);
+    if (!problem) {
+      return res.status(404).json({ success: false, message: 'Problem not found' });
     }
 
     // Create new room
@@ -77,6 +77,48 @@ router.get('/user/active', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching user rooms:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error'
+    });
+  }
+});
+
+// IMPORTANT: All specific routes with suffixes MUST come before the generic /:code route
+// Otherwise the generic route will match first and treat the suffix as a room code
+
+// @desc    Start coding session (host only)
+// @route   PUT /api/rooms/:code/start
+// @access  Private
+router.put('/:code/start', protect, async (req, res) => {
+  try {
+    const room = await Room.findOne({ roomCode: req.params.code });
+
+    if (!room) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    // Check if user is the host
+    if (room.host.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Only the host can start coding' });
+    }
+
+    // Update room status to coding
+    room.status = 'coding';
+    await room.save();
+
+    // Populate and return updated room
+    await room.populate('question');
+    await room.populate('host', 'name email avatar');
+    await room.populate('participants.user', 'name email avatar');
+
+    res.status(200).json({
+      success: true,
+      data: room,
+      message: 'Coding session started'
+    });
+  } catch (error) {
+    console.error('Error starting coding session:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error'
