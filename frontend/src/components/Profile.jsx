@@ -81,7 +81,7 @@ const Profile = () => {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      
+
       // Get user from localStorage
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
@@ -113,8 +113,12 @@ const Profile = () => {
       }
 
       const authData = await authResponse.json();
-      const userId = authData.data._id;
+      // Handle both possible structures (data or user property)
+      const userData = authData.data || authData.user;
+      const userId = userData._id || userData.id;
       console.log('📊 Fetching stats for user:', userId);
+      // Update user state with ID if not present
+      setUser(prev => ({ ...prev, _id: userId }));
 
       // Fetch user stats
       const statsResponse = await fetch(`http://localhost:3001/api/user/${userId}/stats`);
@@ -169,13 +173,13 @@ const Profile = () => {
   useEffect(() => {
     console.log('🔄 Profile component mounted, fetching data...');
     fetchUserData();
-    
+
     // Also set up an interval to refresh every 5 seconds
     const interval = setInterval(() => {
       console.log('🔄 Auto-refreshing profile data...');
       fetchUserData();
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [navigate]);
 
@@ -221,17 +225,17 @@ const Profile = () => {
             {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
-                <svg 
-                  className="w-5 h-5 text-white" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                   />
                 </svg>
               </div>
@@ -240,13 +244,13 @@ const Profile = () => {
 
             {/* Navigation Links */}
             <div className="flex items-center gap-8">
-              <button 
+              <button
                 onClick={() => navigate('/dashboard')}
                 className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
               >
                 Dashboard 🏠
               </button>
-              <button 
+              <button
                 onClick={() => navigate('/problems')}
                 className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
               >
@@ -262,7 +266,7 @@ const Profile = () => {
 
             {/* Right Side Buttons */}
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={fetchUserData}
                 className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
                 title="Refresh stats"
@@ -277,7 +281,7 @@ const Profile = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
               >
@@ -300,9 +304,9 @@ const Profile = () => {
               <div className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 p-1">
                 <div className="w-full h-full rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
                   {user?.profilePicture ? (
-                    <img 
-                      src={user.profilePicture} 
-                      alt="Profile" 
+                    <img
+                      src={user.profilePicture}
+                      alt="Profile"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -325,7 +329,7 @@ const Profile = () => {
                 {user?.name || user?.username || 'Alex Johnson'}
               </h1>
               <p className="text-gray-400 mb-4">@{user?.username || 'alexcodes'}</p>
-              
+
               {/* Stats Grid */}
               <div className="grid grid-cols-4 gap-6">
                 <div className="text-center">
@@ -414,7 +418,7 @@ const Profile = () => {
               </div>
             ) : (
               recentProblems.map((problem, index) => (
-                <div 
+                <div
                   key={index}
                   className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
                 >
@@ -457,16 +461,15 @@ const Profile = () => {
 
           <div className="space-y-4">
             {contestHistory.map((contest, index) => (
-              <div 
+              <div
                 key={index}
                 className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {/* Status Icon */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      contest.status === 'Won' ? 'bg-green-500' : 'bg-red-500'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${contest.status === 'Won' ? 'bg-green-500' : 'bg-red-500'
+                      }`}>
                       {contest.status === 'Won' ? (
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -481,9 +484,9 @@ const Profile = () => {
                     {/* Avatar */}
                     <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
                       {contest.avatar ? (
-                        <img 
-                          src={contest.avatar} 
-                          alt={contest.name} 
+                        <img
+                          src={contest.avatar}
+                          alt={contest.name}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -502,27 +505,26 @@ const Profile = () => {
 
                   {/* Contest Stats */}
                   <div className="flex items-center gap-8">
-                    <div className={`px-3 py-1 rounded text-sm font-semibold ${
-                      contest.status === 'Won' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                    }`}>
+                    <div className={`px-3 py-1 rounded text-sm font-semibold ${contest.status === 'Won' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                      }`}>
                       {contest.status}
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="text-gray-300 text-sm">Score</div>
                       <div className="text-white font-semibold">{contest.score}</div>
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="text-gray-300 text-sm">Problems</div>
                       <div className="text-white font-semibold">{contest.problems}</div>
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="text-gray-300 text-sm">Duration</div>
                       <div className="text-white font-semibold">{contest.duration}</div>
                     </div>
-                    
+
                     <div className="text-center min-w-[80px]">
                       <div className="text-gray-400 text-sm">{contest.timeAgo}</div>
                     </div>
@@ -531,6 +533,13 @@ const Profile = () => {
               </div>
             ))}
           </div>
+        </div>
+        {/* Debug Info */}
+        <div className="mt-8 p-4 bg-black/50 rounded text-xs font-mono text-gray-400">
+          <p>Debug Info:</p>
+          <p>User ID: {user?._id || 'Not set'}</p>
+          <p>Stats: {JSON.stringify(userStats)}</p>
+          <p>Recent Problems: {recentProblems.length}</p>
         </div>
       </div>
     </div>
