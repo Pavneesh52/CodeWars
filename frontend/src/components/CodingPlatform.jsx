@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSocket } from '../context/SocketContext';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import CodeEditor from './CodeEditor';
@@ -8,6 +9,7 @@ const CodingPlatform = () => {
   const { questionId } = useParams();
   const [searchParams] = useSearchParams();
   const roomCode = searchParams.get('roomCode');
+  const socket = useSocket();
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
   const [output, setOutput] = useState('');
@@ -19,6 +21,7 @@ const CodingPlatform = () => {
   const [submissions, setSubmissions] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchQuestion();
@@ -26,6 +29,37 @@ const CodingPlatform = () => {
       fetchRoomDetails();
     }
   }, [questionId, roomCode]);
+
+  // Socket listeners for battle
+  useEffect(() => {
+    if (!socket || !roomCode) return;
+
+    socket.emit('join_room', roomCode);
+
+    socket.on('opponent_progress', ({ user, status, passedTests, totalTests }) => {
+      if (status === 'SUCCESS') {
+        setNotification(`${user.name} solved the problem! 🏆`);
+      } else {
+        // Optional: Show partial progress
+        // setNotification(`${user.name} passed ${passedTests}/${totalTests} tests`);
+      }
+
+      // Refresh submissions list to see the new submission
+      fetchSubmissions();
+
+      setTimeout(() => setNotification(null), 5000);
+    });
+
+    socket.on('game_over', ({ winner }) => {
+      alert(`Game Over! ${winner.name} won the battle! 🏆`);
+      // Optional: Navigate to results page or show modal
+    });
+
+    return () => {
+      socket.off('opponent_progress');
+      socket.off('game_over');
+    };
+  }, [socket, roomCode]);
 
   const fetchQuestion = async () => {
     try {
@@ -97,7 +131,7 @@ int main() {
       try {
         // Create a function from the code
         const func = new Function(userCode + '\n return ' + question.title.replace(/\s+/g, ''));
-        
+
         let results = [];
         testCases.forEach((testCase, index) => {
           try {
@@ -127,7 +161,7 @@ int main() {
         const data = await response.json();
         console.log('All submissions:', data.data);
         console.log('Current questionId:', questionId);
-        
+
         // Filter submissions for current problem (try multiple matching strategies)
         const problemSubmissions = data.data.filter(sub => {
           // Try exact match
@@ -140,10 +174,10 @@ int main() {
           if (questionId && questionId.includes && questionId.includes(String(sub.problemId))) return true;
           return false;
         });
-        
+
         console.log('Filtered submissions:', problemSubmissions);
         setSubmissions(problemSubmissions);
-        
+
         // Check if problem is solved (has at least one successful submission)
         const hasSuccessfulSubmission = problemSubmissions.some(sub => sub.status === 'SUCCESS');
         setIsSolved(hasSuccessfulSubmission);
@@ -207,11 +241,10 @@ int main() {
                   </span>
                 )}
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
                 question.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                'bg-red-500/20 text-red-400'
-              }`}>
+                  'bg-red-500/20 text-red-400'
+                }`}>
                 {question.difficulty}
               </span>
             </div>
@@ -280,31 +313,28 @@ int main() {
             <div className="border-b border-gray-700 flex">
               <button
                 onClick={() => setActiveTab('description')}
-                className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-                  activeTab === 'description'
-                    ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-500'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className={`flex-1 px-6 py-3 font-semibold transition-colors ${activeTab === 'description'
+                  ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-500'
+                  : 'text-gray-400 hover:text-white'
+                  }`}
               >
                 Description
               </button>
               <button
                 onClick={() => setActiveTab('testcases')}
-                className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-                  activeTab === 'testcases'
-                    ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-500'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className={`flex-1 px-6 py-3 font-semibold transition-colors ${activeTab === 'testcases'
+                  ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-500'
+                  : 'text-gray-400 hover:text-white'
+                  }`}
               >
                 Test Cases
               </button>
               <button
                 onClick={() => setActiveTab('submissions')}
-                className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-                  activeTab === 'submissions'
-                    ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-500'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className={`flex-1 px-6 py-3 font-semibold transition-colors ${activeTab === 'submissions'
+                  ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-500'
+                  : 'text-gray-400 hover:text-white'
+                  }`}
               >
                 Submissions
               </button>
@@ -443,7 +473,7 @@ int main() {
                       </button>
                     </div>
                   </div>
-                  
+
                   {loadingSubmissions ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
@@ -475,12 +505,11 @@ int main() {
                                 {submission.language}
                               </span>
                             </div>
-                            <div className={`text-xs px-2 py-1 rounded font-medium ${
-                              submission.status === 'SUCCESS' ? 'text-green-400 bg-green-900/30' :
+                            <div className={`text-xs px-2 py-1 rounded font-medium ${submission.status === 'SUCCESS' ? 'text-green-400 bg-green-900/30' :
                               submission.status === 'COMPILATION_ERROR' ? 'text-red-400 bg-red-900/30' :
-                              submission.status === 'RUNTIME_ERROR' ? 'text-orange-400 bg-orange-900/30' :
-                              'text-gray-400 bg-gray-900/30'
-                            }`}>
+                                submission.status === 'RUNTIME_ERROR' ? 'text-orange-400 bg-orange-900/30' :
+                                  'text-gray-400 bg-gray-900/30'
+                              }`}>
                               {submission.status === 'SUCCESS' && '✅'}
                               {submission.status === 'COMPILATION_ERROR' && '❌'}
                               {submission.status === 'RUNTIME_ERROR' && '💥'}
@@ -488,33 +517,33 @@ int main() {
                               {' '}{submission.status.replace('_', ' ')}
                             </div>
                           </div>
-                          
+
                           <div className="bg-gray-900 rounded p-3 mb-2">
                             <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
                               {submission.code}
                             </pre>
                           </div>
-                          
+
                           {submission.output && (
                             <div className="text-sm text-green-400 mb-1">
                               <strong>Output:</strong> {submission.output}
                             </div>
                           )}
-                          
+
                           {submission.error && (
                             <div className="text-sm text-red-400 mb-1">
                               <strong>Error:</strong> {
-                                typeof submission.error === 'object' 
-                                  ? submission.error.message || submission.error.type 
+                                typeof submission.error === 'object'
+                                  ? submission.error.message || submission.error.type
                                   : submission.error
                               }
                             </div>
                           )}
-                          
+
                           <div className="text-xs text-gray-500">
                             {new Date(submission.submittedAt).toLocaleString()}
                           </div>
-                          
+
                           {submission.testResults && submission.testResults.length > 0 && (
                             <div className="mt-2 text-sm">
                               <span className="text-green-400">
@@ -539,6 +568,18 @@ int main() {
               onChange={setCode}
               onRun={runCode}
               onSubmit={fetchSubmissions}
+              onSubmissionResult={(result) => {
+                if (socket && roomCode) {
+                  const user = JSON.parse(localStorage.getItem('user') || '{}');
+                  socket.emit('submission_result', {
+                    roomCode,
+                    user,
+                    status: result.success ? 'SUCCESS' : 'FAILED',
+                    passedTests: result.passedTests,
+                    totalTests: result.totalTests
+                  });
+                }
+              }}
               theme="vs-dark"
               questionId={questionId}
               problem={question}
