@@ -1,31 +1,66 @@
 import React, { useEffect, useState } from 'react';
+import { useSocket } from '../context/SocketContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 
 const RoomPage = () => {
   const { roomCode } = useParams();
   const navigate = useNavigate();
+  const socket = useSocket();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [previousParticipantCount, setPreviousParticipantCount] = useState(0);
-  const [newJoinedUser, setNewJoinedUser] = useState(null);
-  const [leftUser, setLeftUser] = useState(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  // Initial fetch
   useEffect(() => {
     fetchRoomDetails();
-    
-    // Poll for room updates every 2 seconds
-    const interval = setInterval(() => {
-      fetchRoomDetails();
-    }, 2000);
-
-    return () => clearInterval(interval);
   }, [roomCode]);
+
+  // Socket listeners
+  useEffect(() => {
+    if (!socket || !roomCode) return;
+
+    // Join the socket room
+    socket.emit('join_room', roomCode);
+
+    // Listen for new users
+    socket.on('user_joined', ({ userId }) => {
+      // Refresh room details to get full user info
+      fetchRoomDetails();
+      setNotification('A new challenger appeared!');
+      setTimeout(() => setNotification(null), 3000);
+    });
+
+    // Listen for users leaving
+    socket.on('user_left', ({ userId }) => {
+      fetchRoomDetails();
+      setNotification('A player left the room.');
+      setTimeout(() => setNotification(null), 3000);
+    });
+
+    // Listen for battle start
+    socket.on('battle_started', ({ questionId }) => {
+      navigate(`/coding/${questionId}?roomCode=${roomCode}`);
+    });
+
+    // Listen for room closing
+    socket.on('room_closed', () => {
+      alert('The host has closed the room.');
+      navigate('/dashboard');
+    });
+
+    return () => {
+      socket.off('user_joined');
+      socket.off('user_left');
+      socket.off('battle_started');
+      socket.off('room_closed');
+      socket.emit('leave_room', roomCode);
+    };
+  }, [socket, roomCode, navigate]);
 
   const fetchRoomDetails = async () => {
     try {
@@ -43,60 +78,14 @@ const RoomPage = () => {
       const data = await response.json();
       if (data.success) {
         const currentRoom = data.data;
-        
-        // Check if coding session has started
-        if (currentRoom.status === 'coding') {
-          // If room status changed to coding, redirect all participants
-          if (!room || room.status !== 'coding') {
-            if (currentRoom.question) {
-              navigate(`/coding/${currentRoom.question._id}?roomCode=${roomCode}`);
-            }
-            return;
-          }
+
+        // Check if coding session has started (for late joiners or refreshes)
+        if (currentRoom.status === 'coding' && currentRoom.question) {
+          navigate(`/coding/${currentRoom.question._id}?roomCode=${roomCode}`);
+          return;
         }
-        
-        // Check if new participant joined
-        if (room && currentRoom.participants.length > previousParticipantCount) {
-          // Find the new participant
-          const currentParticipantIds = room.participants.map(p => p.user._id);
-          const newParticipant = currentRoom.participants.find(
-            p => !currentParticipantIds.includes(p.user._id)
-          );
-          
-          if (newParticipant) {
-            setNewJoinedUser(newParticipant.user);
-            setNotification(`${newParticipant.user.name} joined the room!`);
-            
-            // Auto-hide notification after 4 seconds
-            setTimeout(() => {
-              setNotification(null);
-              setNewJoinedUser(null);
-            }, 4000);
-          }
-        }
-        
-        // Check if a participant left
-        if (room && currentRoom.participants.length < previousParticipantCount) {
-          // Find who left
-          const currentParticipantIds = currentRoom.participants.map(p => p.user._id);
-          const leftParticipant = room.participants.find(
-            p => !currentParticipantIds.includes(p.user._id)
-          );
-          
-          if (leftParticipant) {
-            setLeftUser(leftParticipant.user);
-            setNotification(`${leftParticipant.user.name} left the room`);
-            
-            // Auto-hide notification after 4 seconds
-            setTimeout(() => {
-              setNotification(null);
-              setLeftUser(null);
-            }, 4000);
-          }
-        }
-        
+
         setRoom(currentRoom);
-        setPreviousParticipantCount(currentRoom.participants.length);
       } else {
         setError(data.message || 'Failed to load room');
       }
@@ -132,7 +121,7 @@ const RoomPage = () => {
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         setNotification('You have left the room');
         setTimeout(() => navigate('/dashboard'), 1500);
@@ -165,7 +154,7 @@ const RoomPage = () => {
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         navigate('/dashboard');
       } else {
@@ -189,8 +178,15 @@ const RoomPage = () => {
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
+        // Emit socket event to notify all participants
+        if (socket && data.data.question) {
+          socket.emit('start_battle', {
+            roomCode,
+            questionId: data.data.question._id
+          });
+        }
         // Update room status locally
         setRoom(data.data);
         // Navigate to coding page
@@ -361,11 +357,10 @@ const RoomPage = () => {
                 <h4 className="text-xl font-semibold text-cyan-400 mb-2">{room.question.title}</h4>
                 <p className="text-gray-300 mb-4">{room.question.description}</p>
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    room.question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${room.question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
                     room.question.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-red-500/20 text-red-400'
-                  }`}>
+                      'bg-red-500/20 text-red-400'
+                    }`}>
                     {room.question.difficulty}
                   </span>
                   {room.question.topics && room.question.topics.map(topic => (
@@ -388,7 +383,7 @@ const RoomPage = () => {
           <div>
             <div className="bg-[#1a1f3a]/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 sticky top-8">
               <h3 className="text-2xl font-bold mb-6">Participants ({room.participants.length})</h3>
-              
+
               <div className="space-y-4 mb-8">
                 {room.participants.map((participant, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-[#0f1425] rounded-lg">

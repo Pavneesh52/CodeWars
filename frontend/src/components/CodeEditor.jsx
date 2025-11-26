@@ -31,7 +31,7 @@ const generateBoilerplate = (language, problem) => {
 
   const title = problem.title || '';
   const statement = problem.statement || '';
-  
+
   // Detect problem type from title or statement
   const isArray = title.toLowerCase().includes('array') || statement.toLowerCase().includes('array');
   const isLinkedList = title.toLowerCase().includes('linked list') || statement.toLowerCase().includes('listnode');
@@ -189,12 +189,14 @@ public:
 }`
 };
 
-const CodeEditor = ({ 
-  initialCode = '', 
+const CodeEditor = ({
+  initialCode = '',
   language = 'javascript',
-  onChange = () => {},
-  onRun = () => {},
-  onSubmit = () => {},
+  onChange = () => { },
+  onRun = () => { },
+
+  onSubmit = () => { },
+  onSubmissionResult = () => { },
   theme = 'vs-dark',
   questionId = '',
   problem = null
@@ -354,7 +356,7 @@ const CodeEditor = ({
           setPassedTests(passed);
           setTotalTests(data.testResults.length);
           setOutput(`✅ Test Results: ${passed}/${data.testResults.length} passed\n\n${data.results || ''}`);
-          
+
           // Show success animation if all tests passed
           if (passed === data.testResults.length && passed > 0) {
             setShowSuccess(true);
@@ -368,9 +370,23 @@ const CodeEditor = ({
           setShowSuccess(true);
           // Call onSubmit callback to refresh submissions and update solved status
           onSubmit();
+
+          // Notify parent about result (for socket emission)
+          onSubmissionResult({
+            success: true,
+            passedTests: 1,
+            totalTests: 1
+          });
         }
       } else {
         setError(data.error || 'Some test cases failed');
+
+        // Notify parent about failure
+        onSubmissionResult({
+          success: false,
+          passedTests: 0,
+          totalTests: 0 // We don't know total if it failed early
+        });
       }
     } catch (err) {
       setError(`Network Error: ${err.message}`);
@@ -484,15 +500,15 @@ const CodeEditor = ({
                 {error.type === 'INTERNAL_ERROR' && '🔧 Internal Error:'}
                 {!error.type && '❌ Error:'}
               </div>
-              
+
               {error.message && (
                 <div className="text-sm mb-2 font-semibold">{error.message}</div>
               )}
-              
+
               {error.details && (
                 <pre className="text-xs whitespace-pre-wrap font-mono mb-2">{error.details}</pre>
               )}
-              
+
               {error.fixSuggestions && error.fixSuggestions.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-red-800">
                   <div className="text-sm font-semibold mb-1">💡 Fix Suggestions:</div>
@@ -529,11 +545,11 @@ const CodeEditor = ({
           )}
         </div>
       )}
-      
+
       {/* Success Animation */}
-      <SuccessAnimation 
-        show={showSuccess} 
-        onComplete={() => setShowSuccess(false)} 
+      <SuccessAnimation
+        show={showSuccess}
+        onComplete={() => setShowSuccess(false)}
       />
     </div>
   );
