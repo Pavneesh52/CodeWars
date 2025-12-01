@@ -199,7 +199,8 @@ const CodeEditor = ({
   onSubmissionResult = () => { },
   theme = 'vs-dark',
   questionId = '',
-  problem = null
+  problem = null,
+  readOnly = false
 }) => {
   const editorRef = useRef(null);
   const containerRef = useRef(null);
@@ -245,6 +246,7 @@ const CodeEditor = ({
       padding: { top: 16, bottom: 16 },
       lineHeight: 1.6,
       letterSpacing: 0.5,
+      readOnly: readOnly,
     });
 
     setEditor(newEditor);
@@ -260,6 +262,12 @@ const CodeEditor = ({
       newEditor.dispose();
     };
   }, []);
+
+  useEffect(() => {
+    if (editor) {
+      editor.updateOptions({ readOnly: readOnly });
+    }
+  }, [readOnly, editor]);
 
   // Update language when it changes
   useEffect(() => {

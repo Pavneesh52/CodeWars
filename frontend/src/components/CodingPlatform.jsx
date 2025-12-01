@@ -9,6 +9,7 @@ const CodingPlatform = () => {
   const { questionId } = useParams();
   const [searchParams] = useSearchParams();
   const roomCode = searchParams.get('roomCode');
+  const isSpectator = searchParams.get('mode') === 'spectator';
   const socket = useSocket();
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
@@ -249,19 +250,27 @@ int main() {
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <button
-                onClick={runCode}
-                disabled={running}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white px-6 py-2 rounded-lg transition-colors font-semibold"
-              >
-                {running ? 'Running...' : 'Run Code'}
-              </button>
-              <button
-                onClick={submitCode}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-lg transition-colors font-semibold"
-              >
-                Submit
-              </button>
+              {isSpectator ? (
+                <div className="bg-purple-500/20 text-purple-300 border border-purple-500/50 px-4 py-2 rounded-lg text-sm font-semibold animate-pulse flex items-center gap-2">
+                  <span>👁️</span> Spectating Mode
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={runCode}
+                    disabled={running}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white px-6 py-2 rounded-lg transition-colors font-semibold"
+                  >
+                    {running ? 'Running...' : 'Run Code'}
+                  </button>
+                  <button
+                    onClick={submitCode}
+                    className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-lg transition-colors font-semibold"
+                  >
+                    Submit
+                  </button>
+                </>
+              )}
               {room && (
                 <div className="relative">
                   <button
@@ -583,6 +592,7 @@ int main() {
               theme="vs-dark"
               questionId={questionId}
               problem={question}
+              readOnly={isSpectator}
             />
           </div>
         </div>
