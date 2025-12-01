@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useSocket } from '../context/SocketContext';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 
 const RoomPage = () => {
   const { roomCode } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isSpectator = new URLSearchParams(location.search).get('mode') === 'spectator';
   const socket = useSocket();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ const RoomPage = () => {
 
     // Listen for battle start
     socket.on('battle_started', ({ questionId }) => {
-      navigate(`/coding/${questionId}?roomCode=${roomCode}`);
+      navigate(`/coding/${questionId}?roomCode=${roomCode}${isSpectator ? '&mode=spectator' : ''}`);
     });
 
     // Listen for room closing
@@ -81,7 +83,7 @@ const RoomPage = () => {
 
         // Check if coding session has started (for late joiners or refreshes)
         if (currentRoom.status === 'coding' && currentRoom.question) {
-          navigate(`/coding/${currentRoom.question._id}?roomCode=${roomCode}`);
+          navigate(`/coding/${currentRoom.question._id}?roomCode=${roomCode}${isSpectator ? '&mode=spectator' : ''}`);
           return;
         }
 
@@ -331,7 +333,14 @@ const RoomPage = () => {
           <div className="lg:col-span-2">
             {/* Room Code Card */}
             <div className="bg-[#1a1f3a]/90 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-8 mb-8">
-              <h2 className="text-3xl font-bold mb-6 text-cyan-400">Room Code</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-cyan-400">Room Code</h2>
+                {isSpectator && (
+                  <span className="px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/50 rounded-full text-sm font-semibold animate-pulse">
+                    👁️ Spectating
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-4">
                 <div className="bg-[#0f1425] border-2 border-cyan-500 rounded-lg px-8 py-4">
                   <div className="text-5xl font-bold text-cyan-400 tracking-widest font-mono">
@@ -370,12 +379,19 @@ const RoomPage = () => {
                   ))}
                 </div>
               </div>
-              <button
-                onClick={handleStartCoding}
-                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-3 rounded-lg transition-colors"
-              >
-                Start Coding
-              </button>
+              {!isSpectator && (
+                <button
+                  onClick={handleStartCoding}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-3 rounded-lg transition-colors"
+                >
+                  Start Coding
+                </button>
+              )}
+              {isSpectator && (
+                <div className="w-full bg-gray-700/50 text-gray-300 font-semibold py-3 rounded-lg text-center border border-gray-600">
+                  Waiting for host to start...
+                </div>
+              )}
             </div>
           </div>
 
@@ -434,7 +450,7 @@ const RoomPage = () => {
                   onClick={handleLeaveRoom}
                   className="w-full mt-6 bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg transition-colors text-sm font-semibold"
                 >
-                  Leave Room
+                  {isSpectator ? 'Stop Spectating' : 'Leave Room'}
                 </button>
               )}
             </div>

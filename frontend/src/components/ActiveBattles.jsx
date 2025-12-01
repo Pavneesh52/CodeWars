@@ -20,114 +20,56 @@ const ActiveBattles = () => {
       navigate('/');
     }
 
-    // Mock data for active battles - replace with actual API call
-    setTimeout(() => {
-      setActiveBattles([
-        {
-          id: 1,
-          title: "Two Sum Challenge",
-          difficulty: "Easy",
-          participants: 12,
-          maxParticipants: 20,
-          timeLeft: "15:30",
-          status: "active",
-          prize: "500 XP",
-          language: "JavaScript",
-          participantsList: [
-            { id: 1, name: "Alex Chen", avatar: "AC", score: 245, rank: 1, status: "solving" },
-            { id: 2, name: "Sarah Kim", avatar: "SK", score: 198, rank: 2, status: "solving" },
-            { id: 3, name: "Mike Johnson", avatar: "MJ", score: 156, rank: 3, status: "testing" },
-            { id: 4, name: "Emma Wilson", avatar: "EW", score: 134, rank: 4, status: "solving" },
-            { id: 5, name: "David Lee", avatar: "DL", score: 89, rank: 5, status: "idle" }
-          ]
-        },
-        {
-          id: 2,
-          title: "Binary Tree Traversal",
-          difficulty: "Medium",
-          participants: 8,
-          maxParticipants: 15,
-          timeLeft: "28:45",
-          status: "active",
-          prize: "750 XP",
-          language: "Python",
-          participantsList: [
-            { id: 1, name: "CodeMaster", avatar: "CM", score: 312, rank: 1, status: "solving" },
-            { id: 2, name: "PyDev", avatar: "PD", score: 289, rank: 2, status: "testing" },
-            { id: 3, name: "AlgoExpert", avatar: "AE", score: 245, rank: 3, status: "solving" }
-          ]
-        },
-        {
-          id: 3,
-          title: "Dynamic Programming Marathon",
-          difficulty: "Hard",
-          participants: 5,
-          maxParticipants: 10,
-          timeLeft: "42:15",
-          status: "active",
-          prize: "1200 XP",
-          language: "C++",
-          participantsList: [
-            { id: 1, name: "CppNinja", avatar: "CN", score: 456, rank: 1, status: "solving" },
-            { id: 2, name: "AlgoMaster", avatar: "AM", score: 398, rank: 2, status: "testing" },
-            { id: 3, name: "CodeWarrior", avatar: "CW", score: 234, rank: 3, status: "solving" }
-          ]
-        },
-        {
-          id: 4,
-          title: "Array Manipulation Sprint",
-          difficulty: "Medium",
-          participants: 15,
-          maxParticipants: 25,
-          timeLeft: "08:20",
-          status: "active",
-          prize: "600 XP",
-          language: "Java",
-          participantsList: [
-            { id: 1, name: "JavaGuru", avatar: "JG", score: 289, rank: 1, status: "solving" },
-            { id: 2, name: "SpringDev", avatar: "SD", score: 267, rank: 2, status: "solving" },
-            { id: 3, name: "ByteCoder", avatar: "BC", score: 234, rank: 3, status: "testing" },
-            { id: 4, name: "ArrayExpert", avatar: "AE", score: 198, rank: 4, status: "solving" }
-          ]
-        },
-        {
-          id: 5,
-          title: "Graph Algorithms Battle",
-          difficulty: "Hard",
-          participants: 3,
-          maxParticipants: 12,
-          timeLeft: "35:10",
-          status: "active",
-          prize: "1000 XP",
-          language: "Python",
-          participantsList: [
-            { id: 1, name: "GraphMaster", avatar: "GM", score: 445, rank: 1, status: "solving" },
-            { id: 2, name: "NetworkPro", avatar: "NP", score: 378, rank: 2, status: "testing" },
-            { id: 3, name: "TreeExplorer", avatar: "TE", score: 298, rank: 3, status: "idle" }
-          ]
-        },
-        {
-          id: 6,
-          title: "String Processing Challenge",
-          difficulty: "Easy",
-          participants: 18,
-          maxParticipants: 30,
-          timeLeft: "22:55",
-          status: "active",
-          prize: "400 XP",
-          language: "JavaScript",
-          participantsList: [
-            { id: 1, name: "StringNinja", avatar: "SN", score: 234, rank: 1, status: "solving" },
-            { id: 2, name: "RegexMaster", avatar: "RM", score: 198, rank: 2, status: "solving" },
-            { id: 3, name: "TextParser", avatar: "TP", score: 167, rank: 3, status: "testing" },
-            { id: 4, name: "JSExpert", avatar: "JE", score: 145, rank: 4, status: "solving" },
-            { id: 5, name: "CodeCrafter", avatar: "CC", score: 123, rank: 5, status: "idle" }
-          ]
+    const fetchActiveBattles = async () => {
+      try {
+        const response = await fetch(`${API_ENDPOINTS.ROOMS}/active`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setActiveBattles(data.data);
         }
-      ]);
-      setLoading(false);
-    }, 1000);
+      } catch (error) {
+        console.error('Error fetching active battles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActiveBattles();
+
+    // Poll for updates every 10 seconds
+    const interval = setInterval(fetchActiveBattles, 10000);
+    return () => clearInterval(interval);
   }, [navigate]);
+
+  const [joinCode, setJoinCode] = useState('');
+
+  const handleJoinByCode = async (e) => {
+    e.preventDefault();
+    if (!joinCode.trim()) return;
+
+    try {
+      // First check if room exists and is active
+      const response = await fetch(`${API_ENDPOINTS.ROOMS}/${joinCode}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        navigate(`/room/${joinCode}`);
+      } else {
+        alert('Room not found or inactive');
+      }
+    } catch (error) {
+      console.error('Error joining room:', error);
+      alert('Failed to join room');
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -166,9 +108,9 @@ const ActiveBattles = () => {
     }
   };
 
-  const joinBattle = (battleId) => {
-    // Navigate to coding platform with the battle
-    navigate(`/coding/battle/${battleId}`);
+  const joinBattle = (roomCode) => {
+    // Navigate to room page
+    navigate(`/room/${roomCode}`);
   };
 
   const openSpectateModal = (battle) => {
@@ -203,7 +145,7 @@ const ActiveBattles = () => {
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/5 to-purple-500/10 pointer-events-none"></div>
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-cyan-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-purple-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-      
+
       {/* Navigation Bar */}
       <nav className="border-b border-gray-800 bg-[#0a0e27]/80 backdrop-blur-sm relative z-10">
         <div className="max-w-7xl mx-auto px-8">
@@ -211,17 +153,17 @@ const ActiveBattles = () => {
             {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
-                <svg 
-                  className="w-5 h-5 text-white" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                   />
                 </svg>
               </div>
@@ -230,7 +172,7 @@ const ActiveBattles = () => {
 
             {/* Navigation Links */}
             <div className="flex items-center gap-8">
-              <button 
+              <button
                 onClick={() => navigate('/dashboard')}
                 className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
               >
@@ -239,7 +181,7 @@ const ActiveBattles = () => {
               <a href="#" className="text-cyan-400 font-semibold">
                 Active Battles 🔥
               </a>
-              <button 
+              <button
                 onClick={() => navigate('/problems')}
                 className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
               >
@@ -258,7 +200,7 @@ const ActiveBattles = () => {
 
             {/* Right Side Buttons */}
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => navigate('/profile')}
                 className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
               >
@@ -272,7 +214,7 @@ const ActiveBattles = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
               >
@@ -356,7 +298,7 @@ const ActiveBattles = () => {
 
                   {/* Progress Bar */}
                   <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-cyan-500 to-purple-500 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${(battle.participants / battle.maxParticipants) * 100}%` }}
                     ></div>
@@ -392,7 +334,7 @@ const ActiveBattles = () => {
                 {/* Action Buttons */}
                 <div className="flex gap-3">
                   <button
-                    onClick={() => openSpectateModal(battle)}
+                    onClick={() => navigate(`/room/${battle.roomCode}?mode=spectator`)}
                     className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,7 +344,7 @@ const ActiveBattles = () => {
                     Spectate
                   </button>
                   <button
-                    onClick={() => joinBattle(battle.id)}
+                    onClick={() => joinBattle(battle.roomCode)}
                     className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
                   >
                     Join Battle
@@ -429,140 +371,139 @@ const ActiveBattles = () => {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Spectate Modal */}
-      {spectateModal.isOpen && spectateModal.battle && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1f3a] border border-gray-700 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-700">
-              <div className="flex items-center gap-4">
-                <span className="text-3xl">{getLanguageIcon(spectateModal.battle.language)}</span>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{spectateModal.battle.title}</h2>
-                  <div className="flex items-center gap-4 mt-1">
-                    <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getDifficultyColor(spectateModal.battle.difficulty)}`}>
-                      {spectateModal.battle.difficulty}
-                    </div>
-                    <span className="text-gray-400">{spectateModal.battle.language}</span>
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                      <span className="text-green-400 text-sm font-semibold">Live</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={closeSpectateModal}
-                className="text-gray-400 hover:text-white transition-colors p-2"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Battle Info */}
-                <div className="space-y-6">
-                  <div className="bg-[#0f1425] rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-4 text-cyan-400">Battle Information</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Time Remaining</span>
-                        <span className="text-yellow-400 font-mono font-semibold">{spectateModal.battle.timeLeft}</span>
+        {/* Spectate Modal */}
+        {spectateModal.isOpen && spectateModal.battle && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-[#1a1f3a] border border-gray-700 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-700">
+                <div className="flex items-center gap-4">
+                  <span className="text-3xl">{getLanguageIcon(spectateModal.battle.language)}</span>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">{spectateModal.battle.title}</h2>
+                    <div className="flex items-center gap-4 mt-1">
+                      <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${getDifficultyColor(spectateModal.battle.difficulty)}`}>
+                        {spectateModal.battle.difficulty}
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Participants</span>
-                        <span className="text-white font-semibold">{spectateModal.battle.participants}/{spectateModal.battle.maxParticipants}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Prize Pool</span>
-                        <span className="text-purple-400 font-semibold">{spectateModal.battle.prize}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Language</span>
-                        <span className="text-white font-semibold">{spectateModal.battle.language}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#0f1425] rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-4 text-cyan-400">Battle Stats</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Average Score</span>
-                        <span className="text-white font-semibold">187</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Submissions</span>
-                        <span className="text-white font-semibold">23</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Success Rate</span>
-                        <span className="text-green-400 font-semibold">68%</span>
+                      <span className="text-gray-400">{spectateModal.battle.language}</span>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span className="text-green-400 text-sm font-semibold">Live</span>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Participants List */}
-                <div className="bg-[#0f1425] rounded-lg p-4">
-                  <h3 className="text-lg font-semibold mb-4 text-cyan-400">Live Participants</h3>
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {spectateModal.battle.participantsList?.map((participant, index) => (
-                      <div key={participant.id} className="flex items-center justify-between p-3 bg-[#1a1f3a] rounded-lg hover:bg-[#1e2347] transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400 text-sm font-mono w-6">#{participant.rank}</span>
-                            <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                              {participant.avatar}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-white font-semibold">{participant.name}</div>
-                            <div className="flex items-center gap-2">
-                              <span className={`text-xs ${getStatusColor(participant.status)}`}>
-                                {getStatusIcon(participant.status)} {participant.status}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-white font-bold">{participant.score}</div>
-                          <div className="text-gray-400 text-xs">points</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-4 mt-6 pt-6 border-t border-gray-700">
-                <button
-                  onClick={() => {
-                    closeSpectateModal();
-                    joinBattle(spectateModal.battle.id);
-                  }}
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
-                >
-                  Join This Battle
-                </button>
                 <button
                   onClick={closeSpectateModal}
-                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors p-2"
                 >
-                  Close
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Battle Info */}
+                  <div className="space-y-6">
+                    <div className="bg-[#0f1425] rounded-lg p-4">
+                      <h3 className="text-lg font-semibold mb-4 text-cyan-400">Battle Information</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Time Remaining</span>
+                          <span className="text-yellow-400 font-mono font-semibold">{spectateModal.battle.timeLeft}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Participants</span>
+                          <span className="text-white font-semibold">{spectateModal.battle.participants}/{spectateModal.battle.maxParticipants}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Prize Pool</span>
+                          <span className="text-purple-400 font-semibold">{spectateModal.battle.prize}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Language</span>
+                          <span className="text-white font-semibold">{spectateModal.battle.language}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#0f1425] rounded-lg p-4">
+                      <h3 className="text-lg font-semibold mb-4 text-cyan-400">Battle Stats</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Average Score</span>
+                          <span className="text-white font-semibold">187</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Submissions</span>
+                          <span className="text-white font-semibold">23</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Success Rate</span>
+                          <span className="text-green-400 font-semibold">68%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Participants List */}
+                  <div className="bg-[#0f1425] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-4 text-cyan-400">Live Participants</h3>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {spectateModal.battle.participantsList?.map((participant, index) => (
+                        <div key={participant.id} className="flex items-center justify-between p-3 bg-[#1a1f3a] rounded-lg hover:bg-[#1e2347] transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400 text-sm font-mono w-6">#{participant.rank}</span>
+                              <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                {participant.avatar}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-white font-semibold">{participant.name}</div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs ${getStatusColor(participant.status)}`}>
+                                  {getStatusIcon(participant.status)} {participant.status}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-white font-bold">{participant.score}</div>
+                            <div className="text-gray-400 text-xs">points</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 mt-6 pt-6 border-t border-gray-700">
+                  <button
+                    onClick={() => {
+                      closeSpectateModal();
+                      joinBattle(spectateModal.battle.id);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
+                  >
+                    Join This Battle
+                  </button>
+                  <button
+                    onClick={closeSpectateModal}
+                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
