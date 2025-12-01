@@ -165,9 +165,12 @@ const ProblemsPage = () => {
               >
                 Problems 📋
               </button>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
+              <Link
+                to="/leaderboard"
+                className="text-gray-300 hover:text-white transition-colors"
+              >
                 Leaderboard 🏆
-              </a>
+              </Link>
               <Link
                 to="/about"
                 className="text-gray-300 hover:text-white transition-colors"

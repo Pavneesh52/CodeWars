@@ -3,12 +3,18 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Connect to MongoDB
+// Load env vars
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/codewars';
+console.log('Connecting to MongoDB at:', MONGODB_URI);
+
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI);
+        const conn = await mongoose.connect(MONGODB_URI);
         console.log(`MongoDB Connected: ${conn.connection.host}`);
         return conn;
     } catch (error) {
@@ -17,49 +23,44 @@ const connectDB = async () => {
     }
 };
 
-// Define Schemas (simplified)
-const userSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-    totalProblemsSolved: Number,
-    easySolved: Number,
-    mediumSolved: Number,
-    hardSolved: Number
-});
-
-const userSolvedSchema = new mongoose.Schema({
-    userId: mongoose.Schema.Types.ObjectId,
-    title: String,
-    difficulty: String,
-    solvedAt: Date
-}, { collection: 'user-solved' });
-
-const User = mongoose.model('User', userSchema);
-const UserSolved = mongoose.model('UserSolved', userSolvedSchema);
-
-const debug = async () => {
+const inspectDB = async () => {
     await connectDB();
 
-    console.log('\n--- USERS ---');
-    const users = await User.find({});
-    users.forEach(u => {
-        console.log(`ID: ${u._id}, Name: ${u.name}, Email: ${u.email}`);
-        console.log(`   Stats: Total=${u.totalProblemsSolved}, Easy=${u.easySolved}, Medium=${u.mediumSolved}, Hard=${u.hardSolved}`);
-    });
+    try {
+        // Check Users collection
+        const usersCollection = mongoose.connection.db.collection('users');
+        const usersCount = await usersCollection.countDocuments();
+        console.log(`\nTotal Users: ${usersCount}`);
 
-    console.log('\n--- USER SOLVED ---');
-    const solved = await UserSolved.find({});
-    solved.forEach(s => {
-        console.log(`User ID: ${s.userId}, Problem: ${s.title}, Diff: ${s.difficulty}`);
-    });
+        if (usersCount > 0) {
+            const users = await usersCollection.find({}).limit(5).toArray();
+            console.log('\nSample Users (Top 5):');
+            users.forEach(user => {
+                console.log(`- ${user.name} (${user.email})`);
+                console.log(`  Stats: Total=${user.totalProblemsSolved}, Easy=${user.easySolved}, Medium=${user.mediumSolved}, Hard=${user.hardSolved}`);
+                console.log(`  Submissions: ${user.submissionHistory ? user.submissionHistory.length : 0}`);
+            });
+        }
 
-    console.log('\n--- MATCH CHECK ---');
-    for (const u of users) {
-        const count = await UserSolved.countDocuments({ userId: u._id });
-        console.log(`User ${u.name} (${u._id}) has ${count} entries in UserSolved collection.`);
+        // Check UserSolved collection
+        const userSolvedCollection = mongoose.connection.db.collection('usersolveds'); // Mongoose pluralizes to lowercase
+        const solvedCount = await userSolvedCollection.countDocuments();
+        console.log(`\nTotal UserSolved Records: ${solvedCount}`);
+
+        if (solvedCount > 0) {
+            const solved = await userSolvedCollection.find({}).limit(5).toArray();
+            console.log('\nSample Solved Records:');
+            solved.forEach(s => {
+                console.log(`- User: ${s.userId}, Problem: ${s.problemId}, Title: ${s.title}`);
+            });
+        }
+
+    } catch (error) {
+        console.error('Error inspecting DB:', error);
+    } finally {
+        await mongoose.connection.close();
+        process.exit(0);
     }
-
-    process.exit();
 };
 
-debug();
+inspectDB();
