@@ -138,9 +138,12 @@ const TargetPage = () => {
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 Challenges 📋
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
+              <Link
+                to="/leaderboard"
+                className="text-gray-300 hover:text-white transition-colors"
+              >
                 Leaderboard 🏆
-              </a>
+              </Link>
               <Link
                 to="/about"
                 className="text-gray-300 hover:text-white transition-colors"

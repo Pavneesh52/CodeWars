@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const AboutUs = () => {
     const navigate = useNavigate();
@@ -37,27 +37,33 @@ const AboutUs = () => {
 
                         {/* Navigation Links */}
                         <div className="flex items-center gap-8">
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
+                            <Link
+                                to="/dashboard"
+                                className="text-gray-300 hover:text-white transition-colors"
                             >
                                 Dashboard 🏠
-                            </button>
-                            <button
-                                onClick={() => navigate('/active-battles')}
-                                className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
+                            </Link>
+                            <Link
+                                to="/active-battles"
+                                className="text-gray-300 hover:text-white transition-colors"
                             >
                                 Active Battles 🔥
-                            </button>
-                            <button
-                                onClick={() => navigate('/problems')}
-                                className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
+                            </Link>
+                            <Link
+                                to="/problems"
+                                className="text-gray-300 hover:text-white transition-colors"
                             >
                                 Problems 📋
-                            </button>
-                            <a href="#" className="text-cyan-400 font-semibold transition-colors">
+                            </Link>
+                            <Link
+                                to="/leaderboard"
+                                className="text-gray-300 hover:text-white transition-colors"
+                            >
+                                Leaderboard 🏆
+                            </Link>
+                            <Link to="/about" className="text-cyan-400 font-semibold transition-colors">
                                 About Us 📘
-                            </a>
+                            </Link>
                         </div>
 
                         {/* Right Side Buttons */}

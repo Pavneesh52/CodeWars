@@ -12,6 +12,7 @@ import RoomPage from './components/RoomPage'
 import JoinRoom from './components/JoinRoom'
 import SubmissionsPage from './components/SubmissionsPage'
 import AboutUs from './components/AboutUs'
+import Leaderboard from './components/Leaderboard'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/join-room/:roomCode" element={<JoinRoom />} />
           <Route path="/join-room" element={<JoinRoom />} />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </div>
     </Router>
