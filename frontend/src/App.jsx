@@ -11,6 +11,7 @@ import ActiveBattles from './components/ActiveBattles'
 import RoomPage from './components/RoomPage'
 import JoinRoom from './components/JoinRoom'
 import SubmissionsPage from './components/SubmissionsPage'
+import AboutUs from './components/AboutUs'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Route path="/room/:roomCode" element={<RoomPage />} />
           <Route path="/join-room/:roomCode" element={<JoinRoom />} />
           <Route path="/join-room" element={<JoinRoom />} />
+          <Route path="/about" element={<AboutUs />} />
         </Routes>
       </div>
     </Router>

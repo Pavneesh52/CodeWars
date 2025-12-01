@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import QuestionSelectionModal from './QuestionSelectionModal';
 
@@ -34,7 +34,7 @@ const TargetPage = () => {
 
   const handleJoinRoom = async (e) => {
     e.preventDefault();
-    
+
     if (!roomCode.trim()) {
       setJoinError('Please enter a room code');
       return;
@@ -44,7 +44,7 @@ const TargetPage = () => {
       setJoiningRoom(true);
       setJoinError(null);
       const token = localStorage.getItem('token');
-      
+
       const response = await fetch(`${API_ENDPOINTS.ROOMS}/${roomCode.toUpperCase()}/join`, {
         method: 'POST',
         headers: {
@@ -104,17 +104,17 @@ const TargetPage = () => {
             {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
-                <svg 
-                  className="w-5 h-5 text-white" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                   />
                 </svg>
               </div>
@@ -123,13 +123,13 @@ const TargetPage = () => {
 
             {/* Navigation Links */}
             <div className="flex items-center gap-8">
-              <button 
+              <button
                 onClick={() => navigate('/active-battles')}
                 className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
               >
                 Active Battles 🔥
               </button>
-              <button 
+              <button
                 onClick={() => navigate('/problems')}
                 className="text-gray-300 hover:text-white transition-colors bg-none border-none cursor-pointer"
               >
@@ -141,14 +141,17 @@ const TargetPage = () => {
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 Leaderboard 🏆
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
+              <Link
+                to="/about"
+                className="text-gray-300 hover:text-white transition-colors"
+              >
                 About Us 📘
-              </a>
+              </Link>
             </div>
 
             {/* Right Side Buttons */}
             <div className="flex items-center gap-3">
-              <button 
+              <button
                 onClick={() => navigate('/profile')}
                 className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
               >
@@ -162,7 +165,7 @@ const TargetPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
               >
@@ -189,7 +192,7 @@ const TargetPage = () => {
 
             {/* Difficulty and Create/Join Room Buttons */}
             <div className="flex items-center gap-4 mb-6 flex-wrap">
-              <select 
+              <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
                 className="bg-[#1a1f3a] border border-gray-700 text-white px-6 py-3 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 cursor-pointer font-semibold transition-all"
@@ -198,8 +201,8 @@ const TargetPage = () => {
                 <option value="Medium">Medium</option>
                 <option value="Hard">Hard</option>
               </select>
-              
-              <button 
+
+              <button
                 onClick={() => setShowQuestionModal(true)}
                 className="group relative bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 shadow-lg shadow-cyan-500/50 hover:shadow-cyan-500/70 flex items-center gap-2 hover:scale-105"
               >
@@ -208,8 +211,8 @@ const TargetPage = () => {
                 </svg>
                 Create Room
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => setShowJoinRoomModal(true)}
                 className="group relative bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 shadow-lg shadow-purple-600/50 hover:shadow-purple-600/70 flex items-center gap-2 hover:scale-105"
               >

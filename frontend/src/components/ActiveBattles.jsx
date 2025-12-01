@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 
 const ActiveBattles = () => {
@@ -193,9 +193,12 @@ const ActiveBattles = () => {
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 Leaderboard 🏆
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
+              <Link
+                to="/about"
+                className="text-gray-300 hover:text-white transition-colors"
+              >
                 About Us 📘
-              </a>
+              </Link>
             </div>
 
             {/* Right Side Buttons */}
