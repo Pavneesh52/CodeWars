@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 
 const ProblemsPage = () => {
@@ -42,38 +42,38 @@ const ProblemsPage = () => {
     setLoading(true);
     try {
       let url = 'http://localhost:3001/api/problems';
-      
+
       // Fetch all problems first
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       let data = await response.json();
-      
+
       if (data.success && data.data) {
         let filteredProblems = data.data;
-        
+
         // Filter by topic
         if (selectedTopic !== 'All') {
           filteredProblems = filteredProblems.filter(p => p.topic === selectedTopic);
         }
-        
+
         // Filter by difficulty
         if (selectedDifficulty !== 'All') {
           filteredProblems = filteredProblems.filter(p => p.difficulty === selectedDifficulty);
         }
-        
+
         // Filter by search term
         if (searchTerm) {
           const lowerSearchTerm = searchTerm.toLowerCase();
-          filteredProblems = filteredProblems.filter(p => 
+          filteredProblems = filteredProblems.filter(p =>
             p.title.toLowerCase().includes(lowerSearchTerm) ||
             p.statement.toLowerCase().includes(lowerSearchTerm)
           );
         }
-        
+
         setQuestions(filteredProblems);
       } else {
         console.error('API returned success: false', data);
@@ -132,21 +132,21 @@ const ProblemsPage = () => {
             {/* Logo */}
             <div className="flex items-center gap-2">
               <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
-                <svg 
-                  className="w-5 h-5 text-white" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" 
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                   />
                 </svg>
               </div>
-              <span 
+              <span
                 onClick={() => navigate('/dashboard')}
                 className="text-white text-xl font-bold cursor-pointer hover:text-cyan-400 transition-colors"
               >
@@ -159,7 +159,7 @@ const ProblemsPage = () => {
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 Active Rooms 🔥
               </a>
-              <button 
+              <button
                 onClick={() => navigate('/problems')}
                 className="text-white font-semibold border-b-2 border-cyan-500"
               >
@@ -168,9 +168,12 @@ const ProblemsPage = () => {
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
                 Leaderboard 🏆
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">
+              <Link
+                to="/about"
+                className="text-gray-300 hover:text-white transition-colors"
+              >
                 About Us 📘
-              </a>
+              </Link>
             </div>
 
             {/* Right Side Buttons */}
@@ -186,7 +189,7 @@ const ProblemsPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg transition-colors"
               >
