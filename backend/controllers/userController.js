@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import Problem from '../models/Problem.js';
+import BattleResult from '../models/BattleResult.js';
 import mongoose from 'mongoose';
 
 // @desc    Get user stats
@@ -40,6 +41,29 @@ export const getUserStats = async (req, res) => {
         timeTaken: sub.timeTaken
       }));
 
+    // Get battle history
+    const battles = await BattleResult.find({ participants: userId })
+      .sort({ endedAt: -1 })
+      .limit(10)
+      .populate('winner', 'name username avatar')
+      .populate('question', 'title difficulty');
+
+    const formattedBattles = battles.map(battle => {
+      const isWinner = battle.winner._id.toString() === userId;
+      return {
+        id: battle._id,
+        name: battle.winner.name,
+        username: battle.winner.username,
+        score: isWinner ? 'Won' : 'Lost',
+        problems: 1,
+        duration: `${Math.floor(battle.duration / 60)} min`,
+        status: isWinner ? 'Won' : 'Lost',
+        timeAgo: new Date(battle.endedAt).toLocaleDateString(),
+        avatar: battle.winner.avatar,
+        questionTitle: battle.question?.title
+      };
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -54,7 +78,8 @@ export const getUserStats = async (req, res) => {
           mediumSolved: user.mediumSolved,
           hardSolved: user.hardSolved
         },
-        recentSubmissions
+        recentSubmissions,
+        battles: formattedBattles
       }
     });
   } catch (error) {
@@ -111,7 +136,8 @@ export const getMyStats = async (req, res) => {
           mediumSolved: user.mediumSolved,
           hardSolved: user.hardSolved
         },
-        recentSubmissions
+        recentSubmissions,
+        battles: formattedBattles
       }
     });
   } catch (error) {
