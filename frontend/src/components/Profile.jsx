@@ -15,68 +15,7 @@ const Profile = () => {
   const [recentProblems, setRecentProblems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [contestHistory] = useState([
-    {
-      name: 'Sarah Chen',
-      username: 'sarahdev',
-      score: '3-2',
-      problems: 5,
-      duration: '45 min',
-      status: 'Won',
-      timeAgo: 'Today',
-      avatar: null
-    },
-    {
-      name: 'Mike Torres',
-      username: 'miket',
-      score: '4-1',
-      problems: 5,
-      duration: '38 min',
-      status: 'Won',
-      timeAgo: 'Yesterday',
-      avatar: null
-    },
-    {
-      name: 'Emma Wilson',
-      username: 'emmaw',
-      score: '2-3',
-      problems: 5,
-      duration: '50 min',
-      status: 'Lost',
-      timeAgo: '2 days ago',
-      avatar: null
-    },
-    {
-      name: 'David Park',
-      username: 'dpark',
-      score: '5-0',
-      problems: 5,
-      duration: '42 min',
-      status: 'Won',
-      timeAgo: '3 days ago',
-      avatar: null
-    },
-    {
-      name: 'Lisa Anderson',
-      username: 'lisaa',
-      score: '3-1',
-      problems: 4,
-      duration: '35 min',
-      status: 'Won',
-      timeAgo: '4 days ago',
-      avatar: null
-    },
-    {
-      name: 'James Lee',
-      username: 'jameslee',
-      score: '1-3',
-      problems: 4,
-      duration: '48 min',
-      status: 'Lost',
-      timeAgo: '5 days ago',
-      avatar: null
-    }
-  ]);
+  const [contestHistory, setContestHistory] = useState([]);
 
   const fetchUserData = async () => {
     try {
@@ -134,6 +73,11 @@ const Profile = () => {
           hardSolved: statsData.data.stats.hardSolved || 0,
           memberSince: new Date(statsData.data.user.memberSince).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
         });
+
+        // Set contest history from API
+        if (statsData.data.battles) {
+          setContestHistory(statsData.data.battles);
+        }
       } else {
         console.error('❌ Stats API returned error:', statsData);
       }
@@ -173,14 +117,6 @@ const Profile = () => {
   useEffect(() => {
     console.log('🔄 Profile component mounted, fetching data...');
     fetchUserData();
-
-    // Also set up an interval to refresh every 5 seconds
-    const interval = setInterval(() => {
-      console.log('🔄 Auto-refreshing profile data...');
-      fetchUserData();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -469,78 +405,84 @@ const Profile = () => {
           </div>
 
           <div className="space-y-4">
-            {contestHistory.map((contest, index) => (
-              <div
-                key={index}
-                className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    {/* Status Icon */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${contest.status === 'Won' ? 'bg-green-500' : 'bg-red-500'
-                      }`}>
-                      {contest.status === 'Won' ? (
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
+            {contestHistory.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-gray-400">No contest history available yet. Join a battle to get started!</div>
+              </div>
+            ) : (
+              contestHistory.map((contest, index) => (
+                <div
+                  key={index}
+                  className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {/* Status Icon */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${contest.status === 'Won' ? 'bg-green-500' : 'bg-red-500'
+                        }`}>
+                        {contest.status === 'Won' ? (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Avatar */}
+                      <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
+                        {contest.avatar ? (
+                          <img
+                            src={contest.avatar}
+                            alt={contest.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* User Info */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{contest.name}</h3>
+                        <p className="text-gray-400 text-sm">@{contest.username}</p>
+                      </div>
                     </div>
 
-                    {/* Avatar */}
-                    <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-                      {contest.avatar ? (
-                        <img
-                          src={contest.avatar}
-                          alt={contest.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      )}
-                    </div>
+                    {/* Contest Stats */}
+                    <div className="flex items-center gap-8">
+                      <div className={`px-3 py-1 rounded text-sm font-semibold ${contest.status === 'Won' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }`}>
+                        {contest.status}
+                      </div>
 
-                    {/* User Info */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{contest.name}</h3>
-                      <p className="text-gray-400 text-sm">@{contest.username}</p>
-                    </div>
-                  </div>
+                      <div className="text-center">
+                        <div className="text-gray-300 text-sm">Score</div>
+                        <div className="text-white font-semibold">{contest.score}</div>
+                      </div>
 
-                  {/* Contest Stats */}
-                  <div className="flex items-center gap-8">
-                    <div className={`px-3 py-1 rounded text-sm font-semibold ${contest.status === 'Won' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                      }`}>
-                      {contest.status}
-                    </div>
+                      <div className="text-center">
+                        <div className="text-gray-300 text-sm">Problems</div>
+                        <div className="text-white font-semibold">{contest.problems}</div>
+                      </div>
 
-                    <div className="text-center">
-                      <div className="text-gray-300 text-sm">Score</div>
-                      <div className="text-white font-semibold">{contest.score}</div>
-                    </div>
+                      <div className="text-center">
+                        <div className="text-gray-300 text-sm">Duration</div>
+                        <div className="text-white font-semibold">{contest.duration}</div>
+                      </div>
 
-                    <div className="text-center">
-                      <div className="text-gray-300 text-sm">Problems</div>
-                      <div className="text-white font-semibold">{contest.problems}</div>
-                    </div>
-
-                    <div className="text-center">
-                      <div className="text-gray-300 text-sm">Duration</div>
-                      <div className="text-white font-semibold">{contest.duration}</div>
-                    </div>
-
-                    <div className="text-center min-w-[80px]">
-                      <div className="text-gray-400 text-sm">{contest.timeAgo}</div>
+                      <div className="text-center min-w-[80px]">
+                        <div className="text-gray-400 text-sm">{contest.timeAgo}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
         {/* Debug Info */}
