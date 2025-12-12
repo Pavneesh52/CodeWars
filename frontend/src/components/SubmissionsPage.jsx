@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar';
 import * as monaco from 'monaco-editor';
 
 const SubmissionsPage = () => {
+  const navigate = useNavigate();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
@@ -62,12 +65,12 @@ const SubmissionsPage = () => {
   };
 
   const filteredSubmissions = submissions.filter(submission => {
-    const statusMatch = filter === 'all' || 
+    const statusMatch = filter === 'all' ||
       (filter === 'success' && submission.status === 'SUCCESS') ||
       (filter === 'error' && submission.status !== 'SUCCESS');
-    
+
     const languageMatch = languageFilter === 'all' || submission.language === languageFilter;
-    
+
     return statusMatch && languageMatch;
   });
 
@@ -87,8 +90,9 @@ const SubmissionsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Navbar />
+      <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">📝 Code Submissions</h1>
@@ -100,8 +104,8 @@ const SubmissionsPage = () => {
           <div className="flex flex-wrap gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Status Filter</label>
-              <select 
-                value={filter} 
+              <select
+                value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="bg-gray-700 text-white px-4 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
               >
@@ -110,11 +114,11 @@ const SubmissionsPage = () => {
                 <option value="error">Errors Only</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">Language Filter</label>
-              <select 
-                value={languageFilter} 
+              <select
+                value={languageFilter}
                 onChange={(e) => setLanguageFilter(e.target.value)}
                 className="bg-gray-700 text-white px-4 py-2 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
               >
@@ -144,7 +148,7 @@ const SubmissionsPage = () => {
             <h2 className="text-xl font-semibold mb-4">
               Submissions ({filteredSubmissions.length})
             </h2>
-            
+
             {filteredSubmissions.length === 0 ? (
               <div className="bg-gray-800 rounded-lg p-8 text-center text-gray-400">
                 <p>No submissions found</p>
@@ -154,9 +158,8 @@ const SubmissionsPage = () => {
                 <div
                   key={submission._id}
                   onClick={() => setSelectedSubmission(submission)}
-                  className={`bg-gray-800 rounded-lg p-4 cursor-pointer transition-all hover:bg-gray-700 border ${
-                    selectedSubmission?._id === submission._id ? 'border-blue-500' : 'border-gray-700'
-                  }`}
+                  className={`bg-gray-800 rounded-lg p-4 cursor-pointer transition-all hover:bg-gray-700 border ${selectedSubmission?._id === submission._id ? 'border-blue-500' : 'border-gray-700'
+                    }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -167,15 +170,15 @@ const SubmissionsPage = () => {
                       {getStatusIcon(submission.status)} {submission.status.replace('_', ' ')}
                     </div>
                   </div>
-                  
+
                   <div className="text-sm text-gray-400 mb-2">
                     Problem ID: {submission.problemId}
                   </div>
-                  
+
                   <div className="text-xs text-gray-500">
                     {formatDate(submission.submittedAt)}
                   </div>
-                  
+
                   {submission.testResults && submission.testResults.length > 0 && (
                     <div className="mt-2 text-sm">
                       <span className="text-green-400">
@@ -191,7 +194,7 @@ const SubmissionsPage = () => {
           {/* Right: Code Preview */}
           <div className="bg-gray-800 rounded-lg p-4">
             <h2 className="text-xl font-semibold mb-4">Code Preview</h2>
-            
+
             {selectedSubmission ? (
               <div className="space-y-4">
                 <div className="bg-gray-900 rounded p-3">
@@ -203,7 +206,7 @@ const SubmissionsPage = () => {
                       {selectedSubmission.status}
                     </span>
                   </div>
-                  
+
                   {/* Code Display */}
                   <div className="bg-black rounded p-3 overflow-x-auto">
                     <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
@@ -226,7 +229,7 @@ const SubmissionsPage = () => {
                   <div className="bg-gray-900 rounded p-3">
                     <h3 className="text-sm font-medium mb-2 text-red-400">Error:</h3>
                     <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
-                      {typeof selectedSubmission.error === 'object' 
+                      {typeof selectedSubmission.error === 'object'
                         ? JSON.stringify(selectedSubmission.error, null, 2)
                         : selectedSubmission.error
                       }

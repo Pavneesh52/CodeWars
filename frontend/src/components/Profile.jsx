@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 
+import Navbar from './Navbar';
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: 'Alex Johnson', username: 'alexcodes' });
@@ -117,7 +119,7 @@ const Profile = () => {
   useEffect(() => {
     console.log('🔄 Profile component mounted, fetching data...');
     fetchUserData();
-  }, [navigate]);
+  }, []);
 
   const handleLogout = async () => {
     try {

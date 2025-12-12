@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Navbar from './Navbar';
 
 const AboutUs = () => {
     const navigate = useNavigate();
@@ -12,74 +13,7 @@ const AboutUs = () => {
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-purple-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
             {/* Navigation Bar */}
-            <nav className="border-b border-gray-800 bg-[#0a0e27]/80 backdrop-blur-sm relative z-10">
-                <div className="max-w-7xl mx-auto px-8">
-                    <div className="flex justify-between items-center h-16">
-                        {/* Logo */}
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                            <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
-                                <svg
-                                    className="w-5 h-5 text-white"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                                    />
-                                </svg>
-                            </div>
-                            <span className="text-white text-xl font-bold">CodeArena</span>
-                        </div>
-
-                        {/* Navigation Links */}
-                        <div className="flex items-center gap-8">
-                            <Link
-                                to="/dashboard"
-                                className="text-gray-300 hover:text-white transition-colors"
-                            >
-                                Dashboard 🏠
-                            </Link>
-                            <Link
-                                to="/active-battles"
-                                className="text-gray-300 hover:text-white transition-colors"
-                            >
-                                Active Battles 🔥
-                            </Link>
-                            <Link
-                                to="/problems"
-                                className="text-gray-300 hover:text-white transition-colors"
-                            >
-                                Problems 📋
-                            </Link>
-                            <Link
-                                to="/leaderboard"
-                                className="text-gray-300 hover:text-white transition-colors"
-                            >
-                                Leaderboard 🏆
-                            </Link>
-                            <Link to="/about" className="text-cyan-400 font-semibold transition-colors">
-                                About Us 📘
-                            </Link>
-                        </div>
-
-                        {/* Right Side Buttons */}
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => navigate('/profile')}
-                                className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <Navbar />
 
             {/* Main Content */}
             <div className="max-w-4xl mx-auto px-8 py-16 relative z-10">
