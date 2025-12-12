@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 
+import Navbar from './Navbar';
+
 const Leaderboard = () => {
     const navigate = useNavigate();
     const [leaderboardData, setLeaderboardData] = useState([]);
@@ -56,36 +58,7 @@ const Leaderboard = () => {
             {/* Background gradient overlays */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/5 to-purple-500/10 pointer-events-none"></div>
 
-            {/* Navigation Bar */}
-            <nav className="border-b border-gray-800 bg-[#0a0e27]/80 backdrop-blur-sm relative z-10">
-                <div className="max-w-7xl mx-auto px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                            <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
-                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                                </svg>
-                            </div>
-                            <span className="text-white text-xl font-bold">CodeArena</span>
-                        </div>
-
-                        <div className="flex items-center gap-8">
-                            <button onClick={() => navigate('/dashboard')} className="text-gray-300 hover:text-white transition-colors">Dashboard 🏠</button>
-                            <button onClick={() => navigate('/active-battles')} className="text-gray-300 hover:text-white transition-colors">Active Battles 🔥</button>
-                            <button onClick={() => navigate('/problems')} className="text-gray-300 hover:text-white transition-colors">Problems 📋</button>
-                            <button onClick={() => navigate('/leaderboard')} className="text-cyan-400 font-semibold transition-colors">Leaderboard 🏆</button>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => navigate('/profile')} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <Navbar />
 
             <div className="max-w-6xl mx-auto px-8 py-12 relative z-10">
                 <div className="text-center mb-12">

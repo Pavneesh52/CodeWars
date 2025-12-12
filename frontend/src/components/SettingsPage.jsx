@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import Navbar from './Navbar';
+
 const SettingsPage = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('profile');
@@ -129,18 +131,13 @@ const SettingsPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0e27] text-white p-8">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-[#0a0e27] text-white">
+            <Navbar />
+            <div className="max-w-4xl mx-auto p-8">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
                         Settings
                     </h1>
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className="text-gray-400 hover:text-white transition-colors"
-                    >
-                        ← Back to Dashboard
-                    </button>
                 </div>
 
                 <div className="bg-[#1a1f3a] rounded-xl border border-gray-700 overflow-hidden">
@@ -148,8 +145,8 @@ const SettingsPage = () => {
                         <button
                             onClick={() => setActiveTab('profile')}
                             className={`px-6 py-4 font-semibold transition-colors ${activeTab === 'profile'
-                                    ? 'bg-cyan-500/10 text-cyan-400 border-b-2 border-cyan-500'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                                ? 'bg-cyan-500/10 text-cyan-400 border-b-2 border-cyan-500'
+                                : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                 }`}
                         >
                             Profile Settings
@@ -157,8 +154,8 @@ const SettingsPage = () => {
                         <button
                             onClick={() => setActiveTab('security')}
                             className={`px-6 py-4 font-semibold transition-colors ${activeTab === 'security'
-                                    ? 'bg-cyan-500/10 text-cyan-400 border-b-2 border-cyan-500'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                                ? 'bg-cyan-500/10 text-cyan-400 border-b-2 border-cyan-500'
+                                : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                 }`}
                         >
                             Security
