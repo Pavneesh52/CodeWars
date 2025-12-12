@@ -23,6 +23,7 @@ const CodingPlatform = () => {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [participantsProgress, setParticipantsProgress] = useState({});
 
   useEffect(() => {
     fetchQuestion();
@@ -38,11 +39,19 @@ const CodingPlatform = () => {
     socket.emit('join_room', roomCode);
 
     socket.on('opponent_progress', ({ user, status, passedTests, totalTests }) => {
+      setParticipantsProgress(prev => ({
+        ...prev,
+        [user._id]: {
+          name: user.name,
+          status,
+          passedTests,
+          totalTests,
+          percentage: Math.round((passedTests / totalTests) * 100)
+        }
+      }));
+
       if (status === 'SUCCESS') {
         setNotification(`${user.name} solved the problem! 🏆`);
-      } else {
-        // Optional: Show partial progress
-        // setNotification(`${user.name} passed ${passedTests}/${totalTests} tests`);
       }
 
       // Refresh submissions list to see the new submission
@@ -52,8 +61,11 @@ const CodingPlatform = () => {
     });
 
     socket.on('game_over', ({ winner }) => {
-      alert(`Game Over! ${winner.name} won the battle! 🏆`);
-      // Optional: Navigate to results page or show modal
+      setNotification(`🏆 Game Over! ${winner.name} won the battle!`);
+      setIsSolved(true);
+      // Disable editor or show modal here if needed
+      alert(`Game Over! ${winner.name} won the battle! \nReturning to dashboard in 5 seconds...`);
+      setTimeout(() => navigate('/dashboard'), 5000);
     });
 
     return () => {
@@ -258,14 +270,15 @@ int main() {
                 <>
                   <button
                     onClick={runCode}
-                    disabled={running}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white px-6 py-2 rounded-lg transition-colors font-semibold"
+                    disabled={running || isSolved}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold"
                   >
                     {running ? 'Running...' : 'Run Code'}
                   </button>
                   <button
                     onClick={submitCode}
-                    className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-lg transition-colors font-semibold"
+                    disabled={running || isSolved}
+                    className="bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold"
                   >
                     Submit
                   </button>
@@ -315,7 +328,7 @@ int main() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-8 py-8">
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid grid-cols-[1fr_250px_1fr] gap-6">
           {/* Left Panel - Problem Description */}
           <div className="bg-[#1a1f3a]/90 border border-gray-700 rounded-xl overflow-hidden">
             {/* Tabs */}
@@ -569,6 +582,52 @@ int main() {
             </div>
           </div>
 
+          {/* Battle Progress Sidebar */}
+          {room && (
+            <div className="bg-[#1a1f3a]/90 border border-gray-700 rounded-xl p-4 h-[calc(100vh-200px)] overflow-y-auto">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <span>⚔️</span> Battle Progress
+              </h3>
+              <div className="space-y-4">
+                {room.participants.map(participant => {
+                  const progress = participantsProgress[participant.user._id] || {
+                    passedTests: 0,
+                    totalTests: question?.testCases?.length || 0,
+                    percentage: 0,
+                    status: 'solving'
+                  };
+
+                  return (
+                    <div key={participant.user._id} className="bg-[#0f1425] rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-sm text-white truncate max-w-[100px]">
+                          {participant.user.name}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded ${progress.status === 'SUCCESS' ? 'bg-green-500/20 text-green-400' :
+                          'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                          {progress.status === 'SUCCESS' ? 'Solved' : 'Solving'}
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-700 rounded-full h-2 mb-1">
+                        <div
+                          className={`h-2 rounded-full transition-all duration-500 ${progress.status === 'SUCCESS' ? 'bg-green-500' : 'bg-cyan-500'
+                            }`}
+                          style={{ width: `${progress.percentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-right text-xs text-gray-400">
+                        {progress.passedTests}/{question?.testCases?.length || 0} tests
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Right Panel - Code Editor */}
           <div className="flex flex-col h-[calc(100vh-200px)]">
             <CodeEditor
@@ -592,7 +651,7 @@ int main() {
               theme="vs-dark"
               questionId={questionId}
               problem={question}
-              readOnly={isSpectator}
+              readOnly={isSpectator || isSolved}
             />
           </div>
         </div>

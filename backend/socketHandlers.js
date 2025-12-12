@@ -18,15 +18,16 @@ export const initializeSocket = (server) => {
         socket.on('join_room', (roomCode) => {
             socket.join(roomCode);
             console.log(`User ${socket.id} joined room: ${roomCode}`);
-            // Notify others in the room
-            socket.to(roomCode).emit('user_joined', { userId: socket.id });
+            // Notify everyone in the room (including sender) so they can update their participant list
+            io.to(roomCode).emit('user_joined', { userId: socket.id });
         });
 
         // Leave a room
         socket.on('leave_room', (roomCode) => {
             socket.leave(roomCode);
             console.log(`User ${socket.id} left room: ${roomCode}`);
-            socket.to(roomCode).emit('user_left', { userId: socket.id });
+            // Notify everyone remaining in the room
+            io.to(roomCode).emit('user_left', { userId: socket.id });
         });
 
         // Start battle (Host only)
@@ -51,25 +52,35 @@ export const initializeSocket = (server) => {
                 // Save battle result asynchronously
                 (async () => {
                     try {
+                        console.log(`Attempting to save battle result for room: ${roomCode}`);
                         const room = await Room.findOne({ roomCode }).populate('participants.user');
-                        if (room) {
-                            const battleResult = new BattleResult({
-                                roomId: room._id,
-                                question: room.question,
-                                winner: user._id,
-                                participants: room.participants.map(p => p.user._id),
-                                duration: Math.floor((Date.now() - new Date(room.createdAt).getTime()) / 1000) // Approx duration
-                            });
-                            await battleResult.save();
-                            console.log(`✅ Battle result saved for room ${roomCode}`);
 
-                            // Mark room as completed
-                            room.status = 'completed';
-                            room.isActive = false;
-                            await room.save();
+                        if (!room) {
+                            console.error(`❌ Room not found for code: ${roomCode}`);
+                            return;
                         }
+
+                        console.log(`Found room: ${room._id}, Participants: ${room.participants.length}`);
+
+                        const battleResult = new BattleResult({
+                            roomId: room._id,
+                            question: room.question,
+                            winner: user._id,
+                            participants: room.participants.map(p => p.user._id),
+                            duration: Math.floor((Date.now() - new Date(room.createdAt).getTime()) / 1000) // Approx duration
+                        });
+
+                        const savedResult = await battleResult.save();
+                        console.log(`✅ Battle result saved successfully: ${savedResult._id}`);
+
+                        // Mark room as completed
+                        room.status = 'completed';
+                        room.isActive = false;
+                        await room.save();
+                        console.log(`Room ${roomCode} marked as completed`);
                     } catch (err) {
-                        console.error('❌ Error saving battle result:', err);
+                        console.error('❌ CRITICAL ERROR saving battle result:', err);
+                        console.error('Error details:', JSON.stringify(err, null, 2));
                     }
                 })();
             }

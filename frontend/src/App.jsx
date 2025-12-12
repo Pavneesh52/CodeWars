@@ -14,6 +14,8 @@ import SubmissionsPage from './components/SubmissionsPage'
 import AboutUs from './components/AboutUs'
 import Leaderboard from './components/Leaderboard'
 
+import SettingsPage from './components/SettingsPage'
+
 function App() {
   return (
     <Router>
@@ -25,6 +27,7 @@ function App() {
           <Route path="/active-battles" element={<ActiveBattles />} />
           <Route path="/problems" element={<ProblemsPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile-test" element={<ProfileTest />} />
           <Route path="/coding/:questionId" element={<CodingPlatform />} />
           <Route path="/submissions" element={<SubmissionsPage />} />

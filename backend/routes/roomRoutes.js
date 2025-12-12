@@ -69,26 +69,40 @@ router.get('/active', protect, async (req, res) => {
       .sort({ createdAt: -1 });
 
     // Transform data for frontend
-    const formattedRooms = rooms.map(room => ({
-      id: room._id,
-      roomCode: room.roomCode,
-      title: room.question?.title || 'Unknown Problem',
-      difficulty: room.question?.difficulty || 'Medium',
-      language: room.language || 'JavaScript', // Assuming language is stored or defaulted
-      participants: room.participants.length,
-      maxParticipants: 10, // Hardcoded for now, or add to Room model
-      timeLeft: '00:00', // TODO: Calculate based on start time
-      status: room.status, // 'waiting' or 'coding'
-      prize: '500 XP', // Placeholder
-      participantsList: room.participants.map(p => ({
-        id: p.user._id,
-        name: p.user.name,
-        avatar: p.user.avatar,
-        score: 0, // Placeholder
-        rank: 0, // Placeholder
-        status: 'idle' // Placeholder
-      }))
-    }));
+    // Transform data for frontend
+    const formattedRooms = rooms.map(room => {
+      // Calculate time left (45 minutes default duration)
+      const startTime = new Date(room.createdAt).getTime();
+      const now = Date.now();
+      const durationMs = 45 * 60 * 1000; // 45 minutes in ms
+      const elapsedMs = now - startTime;
+      const remainingMs = Math.max(0, durationMs - elapsedMs);
+
+      const minutes = Math.floor(remainingMs / 60000);
+      const seconds = Math.floor((remainingMs % 60000) / 1000);
+      const timeLeft = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      return {
+        id: room._id,
+        roomCode: room.roomCode,
+        title: room.question?.title || 'Unknown Problem',
+        difficulty: room.question?.difficulty || 'Medium',
+        language: 'Multi-language', // Rooms support multiple languages
+        participants: room.participants.length,
+        maxParticipants: 10,
+        timeLeft: timeLeft,
+        status: room.status,
+        prize: `${room.question?.difficulty === 'Hard' ? '100' : room.question?.difficulty === 'Medium' ? '50' : '20'} XP`,
+        participantsList: room.participants.map(p => ({
+          id: p.user._id,
+          name: p.user.name,
+          avatar: p.user.avatar,
+          score: 0, // TODO: Calculate from test cases passed if available
+          rank: 0,
+          status: 'coding' // Default status
+        }))
+      };
+    });
 
     res.status(200).json({
       success: true,

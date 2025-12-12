@@ -42,7 +42,34 @@ const ActiveBattles = () => {
 
     // Poll for updates every 10 seconds
     const interval = setInterval(fetchActiveBattles, 10000);
-    return () => clearInterval(interval);
+
+    // Client-side timer to update countdown every second
+    const timerInterval = setInterval(() => {
+      setActiveBattles(prevBattles => prevBattles.map(battle => {
+        const [mins, secs] = battle.timeLeft.split(':').map(Number);
+        if (mins === 0 && secs === 0) return battle;
+
+        let newSecs = secs - 1;
+        let newMins = mins;
+
+        if (newSecs < 0) {
+          newSecs = 59;
+          newMins -= 1;
+        }
+
+        if (newMins < 0) return { ...battle, timeLeft: '00:00' };
+
+        return {
+          ...battle,
+          timeLeft: `${newMins.toString().padStart(2, '0')}:${newSecs.toString().padStart(2, '0')}`
+        };
+      }));
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(timerInterval);
+    };
   }, [navigate]);
 
   const [joinCode, setJoinCode] = useState('');

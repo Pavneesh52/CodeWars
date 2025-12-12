@@ -31,6 +31,7 @@ const RoomPage = () => {
 
     // Listen for new users
     socket.on('user_joined', ({ userId }) => {
+      console.log('User joined event received:', userId);
       // Refresh room details to get full user info
       fetchRoomDetails();
       setNotification('A new challenger appeared!');
