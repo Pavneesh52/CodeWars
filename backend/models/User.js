@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Name is required'],
     trim: true
   },
+  bio: {
+    type: String,
+    default: '',
+    maxlength: [500, 'Bio cannot be more than 500 characters']
+  },
   avatar: {
     type: String,
     default: null
@@ -84,13 +89,13 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving (only for local auth)
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
-  
+
   // Don't hash if using Google auth
   if (this.authProvider === 'google') return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -101,7 +106,7 @@ userSchema.pre('save', async function(next) {
 });
 
 // Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {
@@ -110,7 +115,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 };
 
 // Method to get public profile
-userSchema.methods.getPublicProfile = function() {
+userSchema.methods.getPublicProfile = function () {
   return {
     id: this._id,
     email: this.email,
@@ -123,7 +128,7 @@ userSchema.methods.getPublicProfile = function() {
 };
 
 // Method to record a submission
-userSchema.methods.recordSubmission = async function(questionId, verdict, difficulty, languageUsed, timeTaken, code, problemTitle = 'Unknown Problem', topic = 'General') {
+userSchema.methods.recordSubmission = async function (questionId, verdict, difficulty, languageUsed, timeTaken, code, problemTitle = 'Unknown Problem', topic = 'General') {
   try {
     // Add to submission history in User document
     this.submissionHistory.push({
@@ -163,10 +168,10 @@ userSchema.methods.recordSubmission = async function(questionId, verdict, diffic
         console.log(`   problemId: ${questionId}`);
         console.log(`   title: ${problemTitle}`);
         console.log(`   alreadySolved: ${alreadySolved}`);
-        
+
         const UserSolved = mongoose.model('UserSolved');
         console.log(`✅ UserSolved model retrieved`);
-        
+
         // Try to update if exists, otherwise create new
         const userSolvedData = {
           userId: this._id,
