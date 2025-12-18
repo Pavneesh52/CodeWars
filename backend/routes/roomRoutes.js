@@ -97,9 +97,12 @@ router.get('/active', protect, async (req, res) => {
           id: p.user._id,
           name: p.user.name,
           avatar: p.user.avatar,
-          score: 0, // TODO: Calculate from test cases passed if available
+          score: p.passedTests || 0,
+          passedTests: p.passedTests || 0,
+          totalTests: p.totalTests || 0,
+          percentage: p.totalTests > 0 ? Math.round((p.passedTests / p.totalTests) * 100) : 0,
           rank: 0,
-          status: 'coding' // Default status
+          status: 'coding'
         }))
       };
     });

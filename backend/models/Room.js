@@ -26,6 +26,17 @@ const roomSchema = new mongoose.Schema({
     joinedAt: {
       type: Date,
       default: Date.now
+    },
+    passedTests: {
+      type: Number,
+      default: 0
+    },
+    totalTests: {
+      type: Number,
+      default: 0
+    },
+    lastSubmissionAt: {
+      type: Date
     }
   }],
   isActive: {
@@ -43,28 +54,28 @@ const roomSchema = new mongoose.Schema({
   },
   expiresAt: {
     type: Date,
-    default: () => new Date(+new Date() + 24*60*60*1000)
+    default: () => new Date(+new Date() + 24 * 60 * 60 * 1000)
   }
 });
 
 // Generate a random room code
-roomSchema.statics.generateRoomCode = async function() {
+roomSchema.statics.generateRoomCode = async function () {
   const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code;
   let isUnique = false;
-  
+
   while (!isUnique) {
     code = '';
     for (let i = 0; i < 6; i++) {
       code += characters.charAt(Math.floor(Math.random() * characters.length));
     }
-    
+
     const existingRoom = await this.findOne({ roomCode: code });
     if (!existingRoom) {
       isUnique = true;
     }
   }
-  
+
   return code;
 };
 

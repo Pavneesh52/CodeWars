@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
+import { useSocket } from '../context/SocketContext';
 import Navbar from './Navbar';
 
 const ActiveBattles = () => {
   const navigate = useNavigate();
+  const socket = useSocket();
   const [user, setUser] = useState(null);
   const [activeBattles, setActiveBattles] = useState([]);
+  const [liveUpdates, setLiveUpdates] = useState({});
   const [loading, setLoading] = useState(true);
   const [spectateModal, setSpectateModal] = useState({ isOpen: false, battle: null });
 
@@ -72,6 +75,26 @@ const ActiveBattles = () => {
       clearInterval(timerInterval);
     };
   }, [navigate]);
+
+  // Socket.io: Subscribe to real-time progress updates
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('opponent_progress', ({ user, passedTests, totalTests }) => {
+      setLiveUpdates(prev => ({
+        ...prev,
+        [user._id]: {
+          passedTests,
+          totalTests,
+          percentage: totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0
+        }
+      }));
+    });
+
+    return () => {
+      socket.off('opponent_progress');
+    };
+  }, [socket]);
 
   const [joinCode, setJoinCode] = useState('');
 
@@ -167,6 +190,15 @@ const ActiveBattles = () => {
     }
   };
 
+  // Merge live socket updates with fetched battle data
+  const battlesWithLiveData = activeBattles.map(battle => ({
+    ...battle,
+    participantsList: battle.participantsList?.map(p => ({
+      ...p,
+      ...(liveUpdates[p.id] || {})  // Overlay live data if available
+    }))
+  }));
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] via-[#1a2040] to-[#2a3f5f] text-white relative overflow-hidden">
       {/* Background gradient overlays */}
@@ -212,7 +244,7 @@ const ActiveBattles = () => {
           ) : (
             /* Battles Grid */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeBattles.map((battle) => (
+              {battlesWithLiveData.map((battle) => (
                 <div
                   key={battle.id}
                   className="bg-[#1a1f3a]/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:transform hover:scale-[1.02] hover:shadow-xl hover:shadow-cyan-500/20"
@@ -423,6 +455,21 @@ const ActiveBattles = () => {
                                     {getStatusIcon(participant.status)} {participant.status}
                                   </span>
                                 </div>
+                                {/* Progress Bar */}
+                                {participant.totalTests > 0 && (
+                                  <div className="mt-2 w-32">
+                                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                      <span>{participant.passedTests}/{participant.totalTests}</span>
+                                      <span>{participant.percentage}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-700 rounded-full h-1.5">
+                                      <div
+                                        className="bg-gradient-to-r from-green-500 to-cyan-500 h-1.5 rounded-full transition-all duration-300"
+                                        style={{ width: `${participant.percentage}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <div className="text-right">

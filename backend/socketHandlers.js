@@ -37,14 +37,33 @@ export const initializeSocket = (server) => {
         });
 
         // Code submission result
-        socket.on('submission_result', ({ roomCode, user, status, passedTests, totalTests }) => {
+        socket.on('submission_result', async ({ roomCode, user, status, passedTests, totalTests }) => {
             console.log(`Submission in ${roomCode} by ${user.name}: ${status}`);
+
+            // Emit real-time update to all participants
             io.to(roomCode).emit('opponent_progress', {
                 user,
                 status,
                 passedTests,
                 totalTests
             });
+
+            // Update participant progress in database
+            try {
+                await Room.updateOne(
+                    { roomCode, 'participants.user': user._id },
+                    {
+                        $set: {
+                            'participants.$.passedTests': passedTests,
+                            'participants.$.totalTests': totalTests,
+                            'participants.$.lastSubmissionAt': new Date()
+                        }
+                    }
+                );
+                console.log(`Updated progress for ${user.name}: ${passedTests}/${totalTests}`);
+            } catch (err) {
+                console.error('Failed to update participant progress:', err);
+            }
 
             if (status === 'SUCCESS') {
                 io.to(roomCode).emit('game_over', { winner: user });
