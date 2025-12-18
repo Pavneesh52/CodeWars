@@ -162,8 +162,83 @@ int main() {
     });
   };
 
-  const submitCode = () => {
-    alert('Code submitted! In a real application, this would be saved to the backend.');
+  const submitCode = async () => {
+    if (!code || code.trim() === '') {
+      alert('Please write some code before submitting!');
+      return;
+    }
+
+    if (running) return;
+
+    try {
+      setRunning(true);
+
+      // First run local tests
+      const testResult = await executeCode(code, question.testCases);
+      const passedTests = testResult.match(/PASSED/g)?.length || 0;
+      const totalTests = question.testCases.length;
+      const isSuccess = passedTests === totalTests;
+
+      // Send to backend
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          problemId: questionId,
+          code: code,
+          language: 'cpp', // Defaulting to cpp as per boilerplate
+          status: isSuccess ? 'SUCCESS' : 'FAILED',
+          passedTests,
+          totalTests,
+          timeTaken: 0, // TODO: Measure execution time
+          memoryTaken: 0
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isSuccess) {
+          setNotification('🎉 Solution Submitted & Accepted!');
+          setIsSolved(true);
+
+          // If in a room, notify server
+          if (roomCode && socket) {
+            socket.emit('submit_code', {
+              roomCode,
+              passedTests,
+              totalTests,
+              status: 'SUCCESS'
+            });
+          }
+        } else {
+          setNotification(`❌ Solution Submitted but Failed (${passedTests}/${totalTests} tests passed)`);
+          // If in a room, notify server of progress
+          if (roomCode && socket) {
+            socket.emit('submit_code', {
+              roomCode,
+              passedTests,
+              totalTests,
+              status: 'FAILED'
+            });
+          }
+        }
+        // Refresh submissions list
+        fetchSubmissions();
+      } else {
+        throw new Error(data.message || 'Submission failed');
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert(`Submission failed: ${error.message}`);
+    } finally {
+      setRunning(false);
+      setTimeout(() => setNotification(null), 5000);
+    }
   };
 
   const fetchSubmissions = async () => {

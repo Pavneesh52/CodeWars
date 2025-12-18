@@ -408,79 +408,113 @@ const Profile = () => {
 
           <div className="space-y-4">
             {contestHistory.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-gray-400">No contest history available yet. Join a battle to get started!</div>
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">⚔️</div>
+                <h3 className="text-2xl font-bold text-white mb-2">No Battle History</h3>
+                <p className="text-gray-400 mb-6">
+                  Join your first coding battle to see your history here!
+                </p>
+                <button
+                  onClick={() => navigate('/active-battles')}
+                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+                >
+                  Join a Battle
+                </button>
               </div>
             ) : (
               contestHistory.map((contest, index) => (
                 <div
                   key={index}
-                  className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
+                  className="bg-[#0f1425] border border-gray-700 rounded-lg p-6 hover:border-cyan-500 transition-all duration-300"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {/* Status Icon */}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${contest.status === 'Won' ? 'bg-green-500' : 'bg-red-500'
+                  {/* Header with Problem and Status */}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${contest.status === 'Won' ? 'bg-green-500' : 'bg-red-500'
                         }`}>
                         {contest.status === 'Won' ? (
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         ) : (
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         )}
                       </div>
+                      <div>
+                        <h3 className="text-white font-bold text-lg">{contest.questionTitle}</h3>
+                        <div className="flex gap-2 mt-1">
+                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getDifficultyColor(contest.questionDifficulty)}`}>
+                            {contest.questionDifficulty}
+                          </span>
+                          <span className="text-gray-400 text-xs">{contest.questionTopic}</span>
+                        </div>
+                      </div>
+                    </div>
 
-                      {/* Avatar */}
-                      <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-                        {contest.avatar ? (
-                          <img
-                            src={contest.avatar}
-                            alt={contest.name}
-                            className="w-full h-full object-cover"
-                          />
+                    {/* Status Badge */}
+                    <span className={`px-4 py-2 rounded-lg font-bold text-sm ${contest.status === 'Won'
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      }`}>
+                      {contest.status}
+                    </span>
+                  </div>
+
+                  {/* Opponent Info */}
+                  <div className="flex items-center gap-3 mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 p-0.5">
+                      <div className="w-full h-full rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
+                        {contest.opponentAvatar ? (
+                          <img src={contest.opponentAvatar} alt={contest.opponentName} className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
                         )}
                       </div>
-
-                      {/* User Info */}
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{contest.name}</h3>
-                        <p className="text-gray-400 text-sm">@{contest.username}</p>
-                      </div>
                     </div>
-
-                    {/* Contest Stats */}
-                    <div className="flex items-center gap-8">
-                      <div className={`px-3 py-1 rounded text-sm font-semibold ${contest.status === 'Won' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                        }`}>
-                        {contest.status}
-                      </div>
-
-                      <div className="text-center">
-                        <div className="text-gray-300 text-sm">Score</div>
-                        <div className="text-white font-semibold">{contest.score}</div>
-                      </div>
-
-                      <div className="text-center">
-                        <div className="text-gray-300 text-sm">Problems</div>
-                        <div className="text-white font-semibold">{contest.problems}</div>
-                      </div>
-
-                      <div className="text-center">
-                        <div className="text-gray-300 text-sm">Duration</div>
-                        <div className="text-white font-semibold">{contest.duration}</div>
-                      </div>
-
-                      <div className="text-center min-w-[80px]">
-                        <div className="text-gray-400 text-sm">{contest.timeAgo}</div>
-                      </div>
+                    <div className="flex-1">
+                      <div className="text-white font-semibold">{contest.opponentName}</div>
+                      <div className="text-gray-400 text-sm">@{contest.opponentUsername}</div>
                     </div>
+                    <div className="text-gray-400 text-xs">
+                      vs
+                    </div>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-4 gap-4 mb-4">
+                    <div className="text-center p-3 bg-gray-800/30 rounded">
+                      <div className="text-gray-400 text-xs mb-1">Your Score</div>
+                      <div className="text-white font-bold text-lg">{contest.myScore || '-'}</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-800/30 rounded">
+                      <div className="text-gray-400 text-xs mb-1">Opponent</div>
+                      <div className="text-white font-bold text-lg">{contest.opponentScore || '-'}</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-800/30 rounded">
+                      <div className="text-gray-400 text-xs mb-1">Duration</div>
+                      <div className="text-white font-semibold text-sm">{contest.duration}</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-800/30 rounded">
+                      <div className="text-gray-400 text-xs mb-1">XP Earned</div>
+                      <div className="text-green-400 font-bold">+{contest.xpEarned}</div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="pt-4 border-t border-gray-700/50 flex justify-between items-center text-sm">
+                    <span className="text-gray-400">
+                      <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {contest.timeAgo}
+                    </span>
+                    <span className="text-gray-400">
+                      Rank: <span className="text-white font-semibold">#{contest.rank}</span>
+                    </span>
                   </div>
                 </div>
               ))

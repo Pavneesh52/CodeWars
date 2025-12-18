@@ -50,7 +50,12 @@ const ActiveBattles = () => {
     // Client-side timer to update countdown every second
     const timerInterval = setInterval(() => {
       setActiveBattles(prevBattles => prevBattles.map(battle => {
+        // If time is not in MM:SS format (e.g. "Waiting..."), don't update
+        if (!battle.timeLeft.includes(':')) return battle;
+
         const [mins, secs] = battle.timeLeft.split(':').map(Number);
+        if (isNaN(mins) || isNaN(secs)) return battle;
+
         if (mins === 0 && secs === 0) return battle;
 
         let newSecs = secs - 1;

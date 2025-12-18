@@ -41,26 +41,59 @@ export const getUserStats = async (req, res) => {
         timeTaken: sub.timeTaken
       }));
 
-    // Get battle history
+    // Get battle history with full participant and question details
     const battles = await BattleResult.find({ participants: userId })
       .sort({ endedAt: -1 })
       .limit(10)
       .populate('winner', 'name username avatar')
-      .populate('question', 'title difficulty');
+      .populate('participants', 'name username avatar')
+      .populate('question', 'title difficulty topic');
 
     const formattedBattles = battles.map(battle => {
       const isWinner = battle.winner._id.toString() === userId;
+
+      // Find opponent (the other participant)
+      const opponent = battle.participants.find(
+        p => p._id.toString() !== userId
+      );
+
+      // Calculate XP earned (winner gets more)
+      const xpEarned = isWinner ? 100 : 50;
+
       return {
         id: battle._id,
-        name: battle.winner.name,
-        username: battle.winner.username,
-        score: isWinner ? 'Won' : 'Lost',
-        problems: 1,
-        duration: `${Math.floor(battle.duration / 60)} min`,
+        // Opponent info
+        opponentName: opponent?.name || 'Unknown Opponent',
+        opponentUsername: opponent?.username || 'unknown',
+        opponentAvatar: opponent?.avatar || null,
+
+        // Problem/Question details
+        questionTitle: battle.question?.title || 'Unknown Problem',
+        questionDifficulty: battle.question?.difficulty || 'Medium',
+        questionTopic: battle.question?.topic || 'General',
+
+        // Battle result
         status: isWinner ? 'Won' : 'Lost',
+
+        // Scores (TODO: Get from Room model participant progress when available)
+        myScore: 0,  // Placeholder - will be enhanced when Room participants have scores
+        opponentScore: 0,  // Placeholder
+
+        // Time information
+        duration: `${Math.floor(battle.duration / 60)}m ${battle.duration % 60}s`,
         timeAgo: new Date(battle.endedAt).toLocaleDateString(),
-        avatar: battle.winner.avatar,
-        questionTitle: battle.question?.title
+        date: battle.endedAt,
+
+        // Stats
+        xpEarned,
+        rank: isWinner ? 1 : 2,
+
+        // Legacy fields for backward compatibility
+        name: opponent?.name || battle.winner.name,
+        username: opponent?.username || battle.winner.username,
+        avatar: opponent?.avatar || battle.winner.avatar,
+        score: isWinner ? 'Won' : 'Lost',
+        problems: 1
       };
     });
 

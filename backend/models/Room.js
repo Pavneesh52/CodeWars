@@ -48,6 +48,9 @@ const roomSchema = new mongoose.Schema({
     enum: ['waiting', 'coding', 'completed'],
     default: 'waiting'
   },
+  startedAt: {
+    type: Date
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -79,6 +82,6 @@ roomSchema.statics.generateRoomCode = async function () {
   return code;
 };
 
-const Room = mongoose.model('Room', roomSchema);
+const Room = mongoose.model('Room', roomSchema, 'active-battles');
 
 export default Room;

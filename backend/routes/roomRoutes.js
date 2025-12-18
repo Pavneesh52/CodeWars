@@ -72,15 +72,21 @@ router.get('/active', protect, async (req, res) => {
     // Transform data for frontend
     const formattedRooms = rooms.map(room => {
       // Calculate time left (45 minutes default duration)
-      const startTime = new Date(room.createdAt).getTime();
-      const now = Date.now();
-      const durationMs = 45 * 60 * 1000; // 45 minutes in ms
-      const elapsedMs = now - startTime;
-      const remainingMs = Math.max(0, durationMs - elapsedMs);
+      let timeLeft = '45:00';
 
-      const minutes = Math.floor(remainingMs / 60000);
-      const seconds = Math.floor((remainingMs % 60000) / 1000);
-      const timeLeft = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      if (room.status === 'coding' && room.startedAt) {
+        const startTime = new Date(room.startedAt).getTime();
+        const now = Date.now();
+        const durationMs = 45 * 60 * 1000; // 45 minutes in ms
+        const elapsedMs = now - startTime;
+        const remainingMs = Math.max(0, durationMs - elapsedMs);
+
+        const minutes = Math.floor(remainingMs / 60000);
+        const seconds = Math.floor((remainingMs % 60000) / 1000);
+        timeLeft = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      } else if (room.status === 'waiting') {
+        timeLeft = 'Waiting...';
+      }
 
       return {
         id: room._id,
@@ -171,6 +177,7 @@ router.put('/:code/start', protect, async (req, res) => {
 
     // Update room status to coding
     room.status = 'coding';
+    room.startedAt = new Date();
     await room.save();
 
     // Populate and return updated room
