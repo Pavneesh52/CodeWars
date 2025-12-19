@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
+import { getCached, setCache } from '../utils/apiCache';
 
 import Navbar from './Navbar';
 
@@ -22,11 +23,25 @@ const Leaderboard = () => {
     const fetchLeaderboard = async () => {
         try {
             setLoading(true);
+
+            // Check cache first (2 minute TTL for leaderboard)
+            const cacheKey = 'leaderboard_global';
+            const cachedData = getCached(cacheKey, 120000);
+
+            if (cachedData) {
+                console.log('Using cached leaderboard data');
+                setLeaderboardData(cachedData);
+                setLoading(false);
+                return;
+            }
+
             const response = await fetch('http://localhost:3001/api/user/leaderboard');
             const data = await response.json();
 
             if (data.success) {
                 setLeaderboardData(data.data);
+                // Cache the leaderboard data
+                setCache(cacheKey, data.data);
             }
         } catch (error) {
             console.error('Error fetching leaderboard:', error);
