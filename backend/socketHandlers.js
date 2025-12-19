@@ -15,25 +15,53 @@ export const initializeSocket = (server) => {
         console.log(`User connected: ${socket.id}`);
 
         // Join a room
-        socket.on('join_room', (roomCode) => {
-            socket.join(roomCode);
-            console.log(`User ${socket.id} joined room: ${roomCode}`);
-            // Notify everyone in the room (including sender) so they can update their participant list
-            io.to(roomCode).emit('user_joined', { userId: socket.id });
+        socket.on('join_room', ({ roomCode, userId }) => {
+            // Handle both object and string (legacy) for backward compatibility
+            const code = typeof roomCode === 'object' ? roomCode.roomCode : roomCode;
+            const uid = typeof roomCode === 'object' ? roomCode.userId : userId;
+
+            socket.join(code);
+
+            // Store metadata for disconnect handling
+            socket.data.roomCode = code;
+            socket.data.userId = uid;
+
+            console.log(`User ${uid || socket.id} joined room: ${code}`);
+
+            // Notify everyone in the room
+            io.to(code).emit('user_joined', { userId: uid || socket.id });
         });
 
         // Leave a room
         socket.on('leave_room', (roomCode) => {
             socket.leave(roomCode);
             console.log(`User ${socket.id} left room: ${roomCode}`);
-            // Notify everyone remaining in the room
             io.to(roomCode).emit('user_left', { userId: socket.id });
         });
 
         // Start battle (Host only)
-        socket.on('start_battle', ({ roomCode, questionId }) => {
-            console.log(`Battle started in room ${roomCode} for question ${questionId}`);
-            io.to(roomCode).emit('battle_started', { questionId });
+        socket.on('start_battle', async ({ roomCode, questionId }) => {
+            try {
+                const room = await Room.findOne({ roomCode });
+                if (!room) return;
+
+                // Enforce minimum players
+                if (room.participants.length < 2) {
+                    socket.emit('error', { message: 'Need at least 2 players to start!' });
+                    return;
+                }
+
+                console.log(`Battle started in room ${roomCode} for question ${questionId}`);
+
+                // Update room status
+                room.status = 'coding';
+                room.startedAt = new Date();
+                await room.save();
+
+                io.to(roomCode).emit('battle_started', { questionId });
+            } catch (err) {
+                console.error('Error starting battle:', err);
+            }
         });
 
         // Code submission result
@@ -105,8 +133,34 @@ export const initializeSocket = (server) => {
             }
         });
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
             console.log('User disconnected:', socket.id);
+            const { roomCode, userId } = socket.data;
+
+            if (roomCode && userId) {
+                console.log(`Cleaning up user ${userId} from room ${roomCode}`);
+                try {
+                    // Remove user from room participants
+                    await Room.updateOne(
+                        { roomCode },
+                        { $pull: { participants: { user: userId } } }
+                    );
+
+                    // Check if room is empty
+                    const room = await Room.findOne({ roomCode });
+                    if (room && room.participants.length === 0) {
+                        console.log(`Room ${roomCode} is empty. Closing it.`);
+                        room.isActive = false;
+                        room.status = 'abandoned';
+                        await room.save();
+                    } else if (room) {
+                        // Notify others
+                        io.to(roomCode).emit('user_left', { userId });
+                    }
+                } catch (err) {
+                    console.error('Error handling disconnect:', err);
+                }
+            }
         });
     });
 

@@ -61,7 +61,7 @@ router.get('/active', protect, async (req, res) => {
   try {
     const rooms = await Room.find({
       isActive: true,
-      status: { $in: ['waiting', 'coding'] } // Fetch both waiting and ongoing battles
+      status: { $nin: ['completed', 'abandoned'] } // Explicitly exclude finished battles
     })
       .populate('question', 'title difficulty topic')
       .populate('host', 'name avatar')
@@ -136,7 +136,8 @@ router.get('/user/active', protect, async (req, res) => {
         { host: req.user._id },
         { 'participants.user': req.user._id }
       ],
-      isActive: true
+      isActive: true,
+      status: { $nin: ['completed', 'abandoned'] } // Exclude finished battles
     })
       .populate('question')
       .populate('host', 'name email avatar')

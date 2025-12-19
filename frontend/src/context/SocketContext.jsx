@@ -16,6 +16,10 @@ export const SocketProvider = ({ children }) => {
             withCredentials: true,
             autoConnect: true,
             reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5,
+            transports: ['polling'], // Use polling only to avoid websocket issues
+            upgrade: false // Prevent upgrade to websocket
         });
 
         setSocket(newSocket);
