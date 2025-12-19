@@ -43,6 +43,24 @@ const problemSchema = new mongoose.Schema(
         output: String,
       },
     ],
+    // NEW: Function signature for dynamic boilerplate generation
+    functionSignature: {
+      methodName: {
+        type: String,
+        default: 'solution'
+      },
+      parameters: {
+        type: [{
+          name: { type: String },
+          type: { type: String }
+        }],
+        default: []
+      },
+      returnType: {
+        type: String,
+        default: 'int'
+      }
+    },
     testCases: [String],
   },
   { timestamps: true }
