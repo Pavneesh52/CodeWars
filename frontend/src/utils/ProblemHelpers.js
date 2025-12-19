@@ -1,5 +1,38 @@
+// Helper to convert database type to language-specific types
+const typeConverter = {
+    cpp: (type) => {
+        const typeMap = {
+            'int': 'int',
+            'string': 'string',
+            'bool': 'bool',
+            'double': 'double',
+            'array<int>': 'vector<int>&',
+            'array<string>': 'vector<string>&',
+            'ListNode*': 'ListNode*',
+            'TreeNode*': 'TreeNode*'
+        };
+        return typeMap[type] || 'int';
+    },
+    java: (type) => {
+        const typeMap = {
+            'int': 'int',
+            'string': 'String',
+            'bool': 'boolean',
+            'double': 'double',
+            'array<int>': 'int[]',
+            'array<string>': 'String[]',
+            'ListNode*': 'ListNode',
+            'TreeNode*': 'TreeNode'
+        };
+        return typeMap[type] || 'int';
+    },
+    python: (type) => type, // Python uses dynamic typing
+    javascript: (type) => type // JavaScript uses dynamic typing
+};
+
 export const getProblemSignature = (problem) => {
-    if (!problem || !problem.title) {
+    // Return default if no problem or no signature
+    if (!problem) {
         return {
             methodName: 'solution',
             params: [
@@ -10,44 +43,31 @@ export const getProblemSignature = (problem) => {
         };
     }
 
-    const title = problem.title.toLowerCase();
+    // Try to use database function signature first
+    if (problem.functionSignature && problem.functionSignature.methodName) {
+        const sig = problem.functionSignature;
 
-    if (title.includes('two sum')) {
+        // Convert parameters to language-specific types
+        const params = (sig.parameters || []).map(param => ({
+            type: typeConverter.cpp(param.type),
+            name: param.name,
+            javaType: typeConverter.java(param.type),
+            pyType: param.name,
+            jsType: param.name
+        }));
+
         return {
-            methodName: 'twoSum',
-            params: [
-                { type: 'vector<int>&', name: 'nums', javaType: 'int[]', pyType: 'nums', jsType: 'nums' },
-                { type: 'int', name: 'target', javaType: 'int', pyType: 'target', jsType: 'target' }
+            methodName: sig.methodName,
+            params: params.length > 0 ? params : [
+                { type: 'vector<int>&', name: 'arr', javaType: 'int[]', pyType: 'arr', jsType: 'arr' }
             ],
-            returnType: 'vector<int>',
-            javaReturnType: 'int[]'
+            returnType: typeConverter.cpp(sig.returnType),
+            javaReturnType: typeConverter.java(sig.returnType)
         };
     }
 
-    if (title.includes('palindrome')) {
-        return {
-            methodName: 'isPalindrome',
-            params: [
-                { type: 'int', name: 'x', javaType: 'int', pyType: 'x', jsType: 'x' }
-            ],
-            returnType: 'bool',
-            javaReturnType: 'boolean'
-        };
-    }
-
-    if (title.includes('sorted array')) {
-        return {
-            methodName: 'findMedianSortedArrays',
-            params: [
-                { type: 'vector<int>&', name: 'nums1', javaType: 'int[]', pyType: 'nums1', jsType: 'nums1' },
-                { type: 'vector<int>&', name: 'nums2', javaType: 'int[]', pyType: 'nums2', jsType: 'nums2' }
-            ],
-            returnType: 'double',
-            javaReturnType: 'double'
-        };
-    }
-
-    // Default: Array problem
+    // Fallback to default signature
+    console.warn(`No function signature found for problem: ${problem.title || 'Unknown'}`);
     return {
         methodName: 'solution',
         params: [
