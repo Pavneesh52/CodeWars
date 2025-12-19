@@ -110,6 +110,33 @@ const CodingPlatform = () => {
     };
   }, [socket, roomCode, user]);
 
+  // Keyboard shortcuts: Ctrl+Enter to Run, Ctrl+S to Submit
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+Enter or Cmd+Enter to run code
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!running && question && !isSpectator) {
+          runCode();
+        }
+      }
+
+      // Ctrl+S or Cmd+S to submit code
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!running && question && !isSpectator) {
+          submitCode();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [running, question, isSpectator, code]);
+
   const fetchQuestion = async () => {
     try {
       console.log('Fetching problem with ID:', questionId);
@@ -475,16 +502,24 @@ const CodingPlatform = () => {
                   <button
                     onClick={runCode}
                     disabled={running || isSolved}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold"
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                    title="Keyboard shortcut: Ctrl+Enter (Cmd+Enter on Mac)"
                   >
-                    {running ? 'Running...' : 'Run Code'}
+                    {running ? 'Running...' : (
+                      <>
+                        Run Code
+                        <span className="text-xs opacity-60">(Ctrl+↵)</span>
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={submitCode}
                     disabled={running || isSolved}
-                    className="bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold"
+                    className="bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                    title="Keyboard shortcut: Ctrl+S (Cmd+S on Mac)"
                   >
                     Submit
+                    <span className="text-xs opacity-60">(Ctrl+S)</span>
                   </button>
                 </>
               )}
