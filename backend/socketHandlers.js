@@ -114,6 +114,11 @@ export const initializeSocket = (server) => {
                             question: room.question,
                             winner: user._id,
                             participants: room.participants.map(p => p.user._id),
+                            scores: room.participants.map(p => ({
+                                user: p.user._id,
+                                passedTests: p.passedTests,
+                                totalTests: p.totalTests
+                            })),
                             duration: Math.floor((Date.now() - new Date(room.createdAt).getTime()) / 1000) // Approx duration
                         });
 
