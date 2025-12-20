@@ -44,6 +44,20 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  notificationPreferences: {
+    emailNotifications: {
+      type: Boolean,
+      default: true
+    },
+    pushNotifications: {
+      type: Boolean,
+      default: true
+    },
+    marketingEmails: {
+      type: Boolean,
+      default: false
+    }
+  },
   lastLogin: {
     type: Date,
     default: Date.now
