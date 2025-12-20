@@ -76,8 +76,9 @@ export const getUserStats = async (req, res) => {
         status: isWinner ? 'Won' : 'Lost',
 
         // Scores (TODO: Get from Room model participant progress when available)
-        myScore: 0,  // Placeholder - will be enhanced when Room participants have scores
-        opponentScore: 0,  // Placeholder
+        // Scores
+        myScore: battle.scores?.find(s => s.user.toString() === userId)?.passedTests || 0,
+        opponentScore: battle.scores?.find(s => s.user.toString() !== userId)?.passedTests || 0,
 
         // Time information
         duration: `${Math.floor(battle.duration / 60)}m ${battle.duration % 60}s`,

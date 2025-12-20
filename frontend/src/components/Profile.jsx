@@ -4,6 +4,8 @@ import { API_ENDPOINTS } from '../config/api';
 
 import Navbar from './Navbar';
 
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: 'Alex Johnson', username: 'alexcodes' });
@@ -16,6 +18,7 @@ const Profile = () => {
   });
   const [recentProblems, setRecentProblems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const [contestHistory, setContestHistory] = useState([]);
 
@@ -120,6 +123,41 @@ const Profile = () => {
     console.log('🔄 Profile component mounted, fetching data...');
     fetchUserData();
   }, []);
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/upload/avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setUser(prev => ({ ...prev, profilePicture: data.data }));
+        // Update local storage
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        storedUser.profilePicture = data.data;
+        localStorage.setItem('user', JSON.stringify(storedUser));
+      } else {
+        console.error('Upload failed:', data.message);
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -247,12 +285,12 @@ const Profile = () => {
         <div className="bg-[#1a1f3a]/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 mb-8">
           <div className="flex items-center gap-6">
             {/* Profile Picture */}
-            <div className="relative">
+            <div className="relative group">
               <div className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 p-1">
-                <div className="w-full h-full rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-                  {user?.profilePicture ? (
+                <div className="w-full h-full rounded-full bg-gray-600 flex items-center justify-center overflow-hidden relative">
+                  {user?.profilePicture || user?.avatar ? (
                     <img
-                      src={user.profilePicture}
+                      src={user.profilePicture || user.avatar}
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
@@ -261,6 +299,25 @@ const Profile = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
+
+                  {/* Upload Overlay */}
+                  <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    {uploading ? (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    ) : (
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    )}
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={uploading}
+                    />
+                  </label>
                 </div>
               </div>
               <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
@@ -278,65 +335,61 @@ const Profile = () => {
               <p className="text-gray-400 mb-4">@{user?.username || 'alexcodes'}</p>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-4 gap-6">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-400 text-sm">Problems Solved</span>
+
+
+              {/* Stats & Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#0f1425] p-4 rounded-lg text-center border border-gray-700">
+                    <div className="text-3xl font-bold text-white mb-1">{userStats.totalProblemsSolved}</div>
+                    <div className="text-gray-400 text-sm">Total Solved</div>
                   </div>
-                  <div className="text-2xl font-bold text-white">{userStats.totalProblemsSolved}</div>
+                  <div className="bg-[#0f1425] p-4 rounded-lg text-center border border-gray-700">
+                    <div className="text-3xl font-bold text-white mb-1">{userStats.memberSince}</div>
+                    <div className="text-gray-400 text-sm">Member Since</div>
+                  </div>
+                  <div className="bg-[#0f1425] p-4 rounded-lg text-center border border-gray-700 col-span-2">
+                    <div className="text-3xl font-bold text-green-400 mb-1">
+                      {contestHistory.filter(c => c.status === 'Won').length}
+                    </div>
+                    <div className="text-gray-400 text-sm">Battles Won</div>
+                  </div>
                 </div>
 
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-400 text-sm">Easy Solved</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">{userStats.easySolved}</div>
-                </div>
-
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-400 text-sm">Medium Solved</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">{userStats.mediumSolved}</div>
-                </div>
-
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-400 text-sm">Hard Solved</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">{userStats.hardSolved}</div>
-                </div>
-
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-400 text-sm">Member Since</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">{userStats.memberSince}</div>
+                {/* Progress Chart */}
+                <div className="bg-[#0f1425] p-4 rounded-lg border border-gray-700 h-64">
+                  <h3 className="text-gray-400 text-sm mb-4 text-center">Problem Difficulty Distribution</h3>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Easy', value: userStats.easySolved, color: '#22c55e' },
+                          { name: 'Medium', value: userStats.mediumSolved, color: '#eab308' },
+                          { name: 'Hard', value: userStats.hardSolved, color: '#ef4444' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {[
+                          { name: 'Easy', value: userStats.easySolved, color: '#22c55e' },
+                          { name: 'Medium', value: userStats.mediumSolved, color: '#eab308' },
+                          { name: 'Hard', value: userStats.hardSolved, color: '#ef4444' }
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#1a1f3a', border: 'none', borderRadius: '8px' }}
+                        itemStyle={{ color: '#fff' }}
+                      />
+                      <Legend verticalAlign="bottom" height={36} />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
@@ -455,8 +508,8 @@ const Profile = () => {
 
                     {/* Status Badge */}
                     <span className={`px-4 py-2 rounded-lg font-bold text-sm ${contest.status === 'Won'
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
                       }`}>
                       {contest.status}
                     </span>
