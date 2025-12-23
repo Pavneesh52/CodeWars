@@ -92,12 +92,17 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
+import { executeCode } from '../services/codeExecutionService.js';
+import Problem from '../models/Problem.js';
+
+// ... (existing imports)
+
 // @desc    Create a new submission
 // @route   POST /api/submissions
 // @access  Private
 router.post('/', protect, async (req, res) => {
   try {
-    const { code, language, problemId, status, output, error, testResults } = req.body;
+    const { code, language, problemId } = req.body;
 
     // Validate required fields
     if (!code || !language || !problemId) {
@@ -107,16 +112,66 @@ router.post('/', protect, async (req, res) => {
       });
     }
 
+    // 1. Fetch Problem
+    const problem = await Problem.findById(problemId);
+    if (!problem) {
+      return res.status(404).json({ success: false, message: 'Problem not found' });
+    }
+
+    // 2. Prepare Test Cases
+    const inputs = problem.testCases.map(tc => typeof tc === 'string' ? tc : tc.input);
+    const expectedOutputs = problem.testCases.map(tc => typeof tc === 'string' ? '' : tc.output);
+
+    // 3. Execute Code
+    console.log(`Executing submission for problem ${problem.title} (${language})`);
+    const results = await executeCode(language, code, inputs);
+
+    // 4. Verify Results
+    let passedTests = 0;
+    let totalTests = results.length;
+    let status = 'SUCCESS';
+    let error = null;
+
+    const testResults = results.map((res, index) => {
+      const expected = expectedOutputs[index];
+      const actual = res.output;
+      // Simple trim comparison
+      const isCorrect = !expected || actual.trim() === expected.trim();
+
+      console.log(`Test ${index}: Expected "${expected}", Actual "${actual}", Correct: ${isCorrect}`);
+
+      if (res.error) {
+        status = 'ERROR'; // Or RUNTIME_ERROR / COMPILATION_ERROR if we parsed it
+        error = res.error; // Capture first error
+      } else if (!isCorrect) {
+        status = 'WRONG_ANSWER';
+      } else {
+        passedTests++;
+      }
+
+      return {
+        input: res.input,
+        output: actual,
+        expected: expected,
+        passed: isCorrect && !res.error,
+        error: res.error
+      };
+    });
+
+    console.log(`Submission Result: ${status} (${passedTests}/${totalTests})`);
+
     // Create submission
     const submission = new Submission({
       userId: req.user._id,
       problemId,
       code,
       language,
-      status: status || 'PENDING',
-      output,
+      status,
+      output: results[0]?.output || '', // Store first output as sample
       error,
       testResults,
+      passedTests,
+      totalTests,
       submittedAt: new Date()
     });
 
@@ -129,7 +184,7 @@ router.post('/', protect, async (req, res) => {
     res.status(201).json({
       success: true,
       data: submission,
-      message: 'Submission created successfully'
+      message: status === 'SUCCESS' ? 'Solution Accepted' : 'Solution Failed'
     });
   } catch (error) {
     console.error('Error creating submission:', error);

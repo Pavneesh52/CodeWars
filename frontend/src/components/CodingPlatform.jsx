@@ -23,6 +23,7 @@ const CodingPlatform = () => {
   const [showParticipants, setShowParticipants] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [expandedSubmission, setExpandedSubmission] = useState(null);
   const [isSolved, setIsSolved] = useState(false);
   const [notification, setNotification] = useState(null);
   const [participantsProgress, setParticipantsProgress] = useState({});
@@ -322,14 +323,9 @@ const CodingPlatform = () => {
 
     try {
       setRunning(true);
+      setNotification('Submitting solution...');
 
-      // First run tests via backend
-      const outputStr = await executeCode(code, question.testCases);
-      const passedTests = (outputStr.match(/PASSED/g) || []).length;
-      const totalTests = question.testCases.length;
-      const isSuccess = passedTests === totalTests;
-
-      // Send submission to backend
+      // Send submission to backend for verification
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:3001/api/submissions', {
         method: 'POST',
@@ -340,18 +336,16 @@ const CodingPlatform = () => {
         body: JSON.stringify({
           problemId: questionId,
           code: code,
-          language: language,
-          status: isSuccess ? 'SUCCESS' : 'FAILED',
-          passedTests,
-          totalTests,
-          timeTaken: 0,
-          memoryTaken: 0
+          language: language
         })
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        const submission = data.data;
+        const isSuccess = submission.status === 'SUCCESS';
+
         if (isSuccess) {
           setNotification('🎉 Solution Submitted & Accepted!');
           setIsSolved(true);
@@ -361,20 +355,20 @@ const CodingPlatform = () => {
             socket.emit('submission_result', {
               roomCode,
               user,
-              passedTests,
-              totalTests,
+              passedTests: submission.passedTests,
+              totalTests: submission.totalTests,
               status: 'SUCCESS'
             });
           }
         } else {
-          setNotification(`❌ Solution Submitted but Failed (${passedTests}/${totalTests} tests passed)`);
+          setNotification(`❌ Solution Failed (${submission.passedTests}/${submission.totalTests} tests passed)`);
           // If in a room, notify server of progress
           if (roomCode && socket && user) {
             socket.emit('submission_result', {
               roomCode,
               user,
-              passedTests,
-              totalTests,
+              passedTests: submission.passedTests,
+              totalTests: submission.totalTests,
               status: 'FAILED'
             });
           }
@@ -386,7 +380,7 @@ const CodingPlatform = () => {
       }
     } catch (error) {
       console.error('Submission error:', error);
-      alert(`Submission failed: ${error.message}`);
+      setNotification(`Submission failed: ${error.message}`);
     } finally {
       setRunning(false);
       setTimeout(() => setNotification(null), 5000);
@@ -733,23 +727,77 @@ const CodingPlatform = () => {
                   </div>
                 ) : (
                   submissions.map((sub, index) => (
-                    <div key={sub._id || index} className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 flex justify-between items-center">
-                      <div>
-                        <div className={`font-bold ${sub.status === 'SUCCESS' ? 'text-green-400' : 'text-red-400'}`}>
-                          {sub.status === 'SUCCESS' ? 'Accepted' : 'Wrong Answer'}
+                    <div key={sub._id || index} className="bg-[#0f1425] border border-gray-700 rounded-lg overflow-hidden">
+                      <div
+                        className="p-4 flex justify-between items-center cursor-pointer hover:bg-[#1a2040] transition-colors"
+                        onClick={() => setExpandedSubmission(expandedSubmission === sub._id ? null : sub._id)}
+                      >
+                        <div>
+                          <div className={`font-bold ${sub.status === 'SUCCESS' ? 'text-green-400' : 'text-red-400'}`}>
+                            {sub.status === 'SUCCESS' ? 'Accepted' : 'Wrong Answer'}
+                          </div>
+                          <div className="text-sm text-gray-400 mt-1">
+                            {new Date(sub.submittedAt).toLocaleString()}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-400 mt-1">
-                          {new Date(sub.submittedAt).toLocaleString()}
+                        <div className="text-right">
+                          <div className="text-sm text-gray-300">
+                            Tests: {sub.passedTests}/{sub.totalTests}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Language: {sub.language || 'cpp'}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-300">
-                          Tests: {sub.passedTests}/{sub.totalTests}
+
+                      {/* Expanded Details */}
+                      {expandedSubmission === sub._id && (
+                        <div className="border-t border-gray-700 bg-[#0a0e27] p-4">
+                          <h4 className="text-sm font-bold text-gray-300 mb-3">Test Results</h4>
+                          <div className="space-y-3">
+                            {sub.testResults && sub.testResults.map((test, i) => (
+                              <div key={i} className={`p-3 rounded border ${test.passed ? 'border-green-900/50 bg-green-900/10' : 'border-red-900/50 bg-red-900/10'}`}>
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className={`text-xs font-bold ${test.passed ? 'text-green-400' : 'text-red-400'}`}>
+                                    Test Case {i + 1}: {test.passed ? 'Passed' : 'Failed'}
+                                  </span>
+                                  {test.error && <span className="text-xs text-red-300 bg-red-900/20 px-2 py-1 rounded">Error</span>}
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-2 text-xs font-mono">
+                                  <div>
+                                    <span className="text-gray-500">Input:</span>
+                                    <div className="text-gray-300 bg-[#0f1425] p-1 rounded mt-1 whitespace-pre-wrap">{test.input}</div>
+                                  </div>
+
+                                  {!test.passed && (
+                                    <>
+                                      <div>
+                                        <span className="text-gray-500">Expected:</span>
+                                        <div className="text-green-300/70 bg-[#0f1425] p-1 rounded mt-1 whitespace-pre-wrap">{test.expected}</div>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-500">Actual:</span>
+                                        <div className="text-red-300/70 bg-[#0f1425] p-1 rounded mt-1 whitespace-pre-wrap">{test.output}</div>
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {test.error && (
+                                    <div>
+                                      <span className="text-gray-500">Error Message:</span>
+                                      <div className="text-red-400 bg-[#0f1425] p-1 rounded mt-1 whitespace-pre-wrap">{test.error}</div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            {(!sub.testResults || sub.testResults.length === 0) && (
+                              <div className="text-gray-500 text-sm italic">No detailed test results available.</div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          Language: {sub.language || 'cpp'}
-                        </div>
-                      </div>
+                      )}
                     </div>
                   ))
                 )}

@@ -61,7 +61,12 @@ const problemSchema = new mongoose.Schema(
         default: 'int'
       }
     },
-    testCases: [String],
+    testCases: [
+      {
+        input: String,
+        output: String
+      }
+    ],
   },
   { timestamps: true }
 );
