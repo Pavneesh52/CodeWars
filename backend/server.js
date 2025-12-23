@@ -80,6 +80,7 @@ app.use('/api/code', codeRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/problems', problemRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes); // Alias for legacy frontend calls
 app.use('/api/upload', uploadRoutes);
 
 // Serve static files from uploads directory

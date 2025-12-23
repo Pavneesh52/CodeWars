@@ -61,6 +61,9 @@ const roomSchema = new mongoose.Schema({
   }
 });
 
+// Index for faster active battle queries
+roomSchema.index({ status: 1 });
+
 // Generate a random room code
 roomSchema.statics.generateRoomCode = async function () {
   const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
