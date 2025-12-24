@@ -5,6 +5,8 @@ import { API_ENDPOINTS } from '../config/api';
 import CodeEditor from './CodeEditor';
 import { generateBoilerplate, getDriverCode, transformInput } from '../utils/ProblemHelpers';
 import { getCached, setCache, invalidateCache } from '../utils/apiCache';
+import Skeleton from './common/Skeleton';
+import toast from 'react-hot-toast';
 
 const CodingPlatform = () => {
   const navigate = useNavigate();
@@ -25,7 +27,6 @@ const CodingPlatform = () => {
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [expandedSubmission, setExpandedSubmission] = useState(null);
   const [isSolved, setIsSolved] = useState(false);
-  const [notification, setNotification] = useState(null);
   const [participantsProgress, setParticipantsProgress] = useState({});
   const [user, setUser] = useState(null);
 
@@ -88,20 +89,18 @@ const CodingPlatform = () => {
       }));
 
       if (status === 'SUCCESS') {
-        setNotification(`${opponent.name} solved the problem! 🏆`);
+        toast.success(`${opponent.name} solved the problem! 🏆`);
       }
 
       // Refresh submissions list to see the new submission
       fetchSubmissions();
-
-      setTimeout(() => setNotification(null), 5000);
     });
 
     socket.on('game_over', ({ winner }) => {
-      setNotification(`🏆 Game Over! ${winner.name} won the battle!`);
+      toast.success(`🏆 Game Over! ${winner.name} won the battle!`, { duration: 5000 });
       setIsSolved(true);
       // Disable editor or show modal here if needed
-      alert(`Game Over! ${winner.name} won the battle! \nReturning to dashboard in 5 seconds...`);
+      // alert(`Game Over! ${winner.name} won the battle! \nReturning to dashboard in 5 seconds...`);
       setTimeout(() => navigate('/dashboard'), 5000);
     });
 
@@ -323,7 +322,7 @@ const CodingPlatform = () => {
 
     try {
       setRunning(true);
-      setNotification('Submitting solution...');
+      const loadingToast = toast.loading('Submitting solution...');
 
       // Send submission to backend for verification
       const token = localStorage.getItem('token');
@@ -347,7 +346,7 @@ const CodingPlatform = () => {
         const isSuccess = submission.status === 'SUCCESS';
 
         if (isSuccess) {
-          setNotification('🎉 Solution Submitted & Accepted!');
+          toast.success('🎉 Solution Submitted & Accepted!', { id: loadingToast });
           setIsSolved(true);
 
           // If in a room, notify server
@@ -361,7 +360,7 @@ const CodingPlatform = () => {
             });
           }
         } else {
-          setNotification(`❌ Solution Failed (${submission.passedTests}/${submission.totalTests} tests passed)`);
+          toast.error(`❌ Solution Failed (${submission.passedTests}/${submission.totalTests} tests passed)`, { id: loadingToast });
           // If in a room, notify server of progress
           if (roomCode && socket && user) {
             socket.emit('submission_result', {
@@ -380,10 +379,9 @@ const CodingPlatform = () => {
       }
     } catch (error) {
       console.error('Submission error:', error);
-      setNotification(`Submission failed: ${error.message}`);
+      toast.error(`Submission failed: ${error.message}`);
     } finally {
       setRunning(false);
-      setTimeout(() => setNotification(null), 5000);
     }
   };
 
@@ -442,8 +440,40 @@ const CodingPlatform = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] to-[#1a2040] text-white flex items-center justify-center">
-        <div className="text-2xl">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] to-[#1a2040] text-white flex flex-col h-screen overflow-hidden">
+        {/* Header Skeleton */}
+        <div className="h-16 border-b border-gray-800 bg-[#0a0e27]/80 flex items-center px-8">
+          <Skeleton className="w-8 h-8 rounded mr-4" />
+          <Skeleton className="w-48 h-6 rounded mr-4" />
+          <Skeleton className="w-20 h-6 rounded-full" />
+        </div>
+
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          {/* Left Panel Skeleton */}
+          <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col border-r border-gray-800 bg-[#0a0e27]/50 p-6 space-y-6">
+            <Skeleton className="w-32 h-8 rounded mb-4" />
+            <div className="space-y-2">
+              <Skeleton className="w-full h-4 rounded" />
+              <Skeleton className="w-full h-4 rounded" />
+              <Skeleton className="w-3/4 h-4 rounded" />
+            </div>
+            <div className="space-y-2 mt-8">
+              <Skeleton className="w-24 h-6 rounded mb-2" />
+              <Skeleton className="w-full h-24 rounded" />
+            </div>
+          </div>
+
+          {/* Right Panel Skeleton */}
+          <div className="w-full md:w-1/2 h-1/2 md:h-full bg-[#1e1e1e] flex flex-col">
+            <div className="h-10 border-b border-[#333] bg-[#252526] flex items-center px-4 gap-2">
+              <Skeleton className="w-20 h-6 rounded" />
+              <Skeleton className="w-20 h-6 rounded" />
+            </div>
+            <div className="flex-1 p-4">
+              <Skeleton className="w-full h-full rounded opacity-10" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -457,7 +487,7 @@ const CodingPlatform = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] to-[#1a2040] text-white flex flex-col h-screen overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] to-[#1a2040] text-white flex flex-col h-screen md:overflow-hidden overflow-auto">
       {/* Header */}
       <nav className="border-b border-gray-800 bg-[#0a0e27]/80 backdrop-blur-sm sticky top-0 z-20 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-8">
@@ -568,21 +598,12 @@ const CodingPlatform = () => {
         </div>
       </nav>
 
-      {/* Notification Toast */}
-      {notification && (
-        <div className="fixed top-20 right-8 z-50 animate-fade-in-down">
-          <div className={`px-6 py-4 rounded-lg shadow-xl flex items-center gap-3 ${notification.includes('Failed') ? 'bg-red-500/90' : 'bg-green-500/90'
-            } backdrop-blur-sm`}>
-            <span className="text-2xl">{notification.includes('Failed') ? '❌' : '🎉'}</span>
-            <p className="font-bold text-white">{notification}</p>
-          </div>
-        </div>
-      )}
+
 
       {/* Main Content - Fixed Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Panel: Problem Description */}
-        <div className="w-1/2 flex flex-col border-r border-gray-800 bg-[#0a0e27]/50">
+        <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col border-r border-gray-800 bg-[#0a0e27]/50">
           {/* Tabs */}
           <div className="flex border-b border-gray-800">
             <button
@@ -807,7 +828,7 @@ const CodingPlatform = () => {
         </div>
 
         {/* Right Panel: Code Editor */}
-        <div className="w-1/2 flex flex-col bg-[#1e1e1e]">
+        <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col bg-[#1e1e1e]">
           {/* Editor Toolbar */}
           <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-[#333]">
             <div className="flex items-center gap-4">

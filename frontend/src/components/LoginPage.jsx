@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { API_ENDPOINTS } from '../config/api';
 
 const LoginPage = () => {
@@ -15,6 +16,7 @@ const LoginPage = () => {
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam === 'auth_failed') {
+      toast.error('Authentication failed. Please try again.');
       setError('Authentication failed. Please try again.');
     }
   }, [searchParams]);
@@ -42,12 +44,17 @@ const LoginPage = () => {
         localStorage.setItem('user', JSON.stringify(data.user));
 
         // Navigate to dashboard
+        toast.success(`Welcome back, ${data.user.name}!`);
         navigate('/dashboard');
       } else {
-        setError(data.message || 'Login failed');
+        const msg = data.message || 'Login failed';
+        toast.error(msg);
+        setError(msg);
       }
     } catch (err) {
-      setError('Network error. Please try again.');
+      const msg = 'Network error. Please try again.';
+      toast.error(msg);
+      setError(msg);
       console.error('Login error:', err);
     } finally {
       setLoading(false);

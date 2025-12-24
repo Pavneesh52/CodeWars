@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
 
 // Lazy load components
 const LoginPage = lazy(() => import('./components/LoginPage'))
@@ -28,6 +29,22 @@ function App() {
   return (
     <Router>
       <div className="App">
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#1e293b',
+              color: '#fff',
+              border: '1px solid #334155',
+            },
+            success: {
+              iconTheme: {
+                primary: '#22d3ee',
+                secondary: '#1e293b',
+              },
+            },
+          }}
+        />
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<LoginPage />} />
