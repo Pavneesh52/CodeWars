@@ -25,16 +25,16 @@ const Navbar = () => {
     };
 
     const isActive = (path) => {
-        return location.pathname === path ? 'text-cyan-400 font-semibold' : 'text-gray-300 hover:text-white';
+        return location.pathname === path ? 'text-primary font-semibold' : 'text-gray-300 hover:text-white';
     };
 
     return (
-        <nav className="border-b border-gray-800 bg-[#0a0e27]/80 backdrop-blur-sm relative z-10">
+        <nav className="border-b border-gray-800 bg-background/80 backdrop-blur-sm relative z-10">
             <div className="max-w-7xl mx-auto px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <Link to="/dashboard" className="flex items-center gap-2">
-                        <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
+                        <div className="bg-primary rounded-lg p-2 flex items-center justify-center">
                             <svg
                                 className="w-5 h-5 text-white"
                                 fill="none"
@@ -49,7 +49,7 @@ const Navbar = () => {
                                 />
                             </svg>
                         </div>
-                        <span className="text-white text-xl font-bold">CodeArena</span>
+                        <span className="text-white text-xl font-bold font-display">CodeArena</span>
                     </Link>
 
                     {/* Navigation Links */}

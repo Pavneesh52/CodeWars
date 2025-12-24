@@ -188,11 +188,11 @@ const Profile = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] via-[#1a2040] to-[#2a3f5f] text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-primary text-white relative overflow-hidden">
       {/* Background gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/5 to-purple-500/10 pointer-events-none"></div>
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-cyan-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-purple-500/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-secondary/10 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-primary/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-radial from-secondary/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
 
       {/* Navigation Bar */}
       <nav className="border-b border-gray-800 bg-[#0a0e27]/80 backdrop-blur-sm relative z-10">
@@ -200,7 +200,7 @@ const Profile = () => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="bg-cyan-500 rounded-lg p-2 flex items-center justify-center">
+              <div className="bg-primary rounded-lg p-2 flex items-center justify-center">
                 <svg
                   className="w-5 h-5 text-white"
                   fill="none"
@@ -215,7 +215,7 @@ const Profile = () => {
                   />
                 </svg>
               </div>
-              <span className="text-white text-xl font-bold">CodeArena</span>
+              <span className="text-white text-xl font-bold font-display">CodeArena</span>
             </div>
 
             {/* Navigation Links */}
@@ -282,11 +282,11 @@ const Profile = () => {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-8 py-12 relative z-10">
         {/* Profile Header */}
-        <div className="bg-[#1a1f3a]/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 mb-8">
+        <div className="bg-background-secondary/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 mb-8">
           <div className="flex items-center gap-6">
             {/* Profile Picture */}
             <div className="relative group">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 p-1">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary p-1">
                 <div className="w-full h-full rounded-full bg-gray-600 flex items-center justify-center overflow-hidden relative">
                   {user?.profilePicture || user?.avatar ? (
                     <img
@@ -397,7 +397,7 @@ const Profile = () => {
         </div>
 
         {/* Recently Solved Problems */}
-        <div className="bg-[#1a1f3a]/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8">
+        <div className="bg-background-secondary/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,7 +420,7 @@ const Profile = () => {
               recentProblems.map((problem, index) => (
                 <div
                   key={index}
-                  className="bg-[#0f1425] border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors"
+                  className="bg-surface border border-gray-700 rounded-lg p-4 hover:border-primary transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -449,7 +449,7 @@ const Profile = () => {
         </div>
 
         {/* Contest History */}
-        <div className="bg-[#1a1f3a]/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 mt-8">
+        <div className="bg-background-secondary/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 mt-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,7 +469,7 @@ const Profile = () => {
                 </p>
                 <button
                   onClick={() => navigate('/active-battles')}
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+                  className="bg-primary hover:bg-primary-hover text-white font-semibold px-8 py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
                 >
                   Join a Battle
                 </button>
@@ -478,7 +478,7 @@ const Profile = () => {
               contestHistory.map((contest, index) => (
                 <div
                   key={index}
-                  className="bg-[#0f1425] border border-gray-700 rounded-lg p-6 hover:border-cyan-500 transition-all duration-300"
+                  className="bg-surface border border-gray-700 rounded-lg p-6 hover:border-primary transition-all duration-300"
                 >
                   {/* Header with Problem and Status */}
                   <div className="flex justify-between items-start mb-4">
@@ -517,7 +517,7 @@ const Profile = () => {
 
                   {/* Opponent Info */}
                   <div className="flex items-center gap-3 mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 p-0.5">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary p-0.5">
                       <div className="w-full h-full rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
                         {contest.opponentAvatar ? (
                           <img src={contest.opponentAvatar} alt={contest.opponentName} className="w-full h-full object-cover" />
