@@ -6,6 +6,7 @@ const typeConverter = {
             'string': 'string',
             'bool': 'bool',
             'double': 'double',
+            'void': 'void',
             'array<int>': 'vector<int>&',
             'array<string>': 'vector<string>&',
             'ListNode*': 'ListNode*',
@@ -19,6 +20,7 @@ const typeConverter = {
             'string': 'String',
             'bool': 'boolean',
             'double': 'double',
+            'void': 'void',
             'array<int>': 'int[]',
             'array<string>': 'String[]',
             'ListNode*': 'ListNode',
@@ -192,13 +194,33 @@ export const getDriverCode = (language, userCode, problem) => {
         });
 
         const args = sig.params.map(p => p.name).join(', ');
-        const printLogic = sig.returnType === 'vector<int>'
-            ? `
-        cout << "[";
-        for(int i=0; i<result.size(); i++) cout << result[i] << (i<result.size()-1?",":"");
-        cout << "]" << endl;
-        `
-            : `cout << boolalpha << result << endl;`;
+
+        let callAndPrint = '';
+        if (sig.returnType === 'void') {
+            // Assume first vector parameter is the one to print
+            const vectorParam = sig.params.find(p => p.type.includes('vector'));
+            const paramToPrint = vectorParam ? vectorParam.name : (sig.params[0] ? sig.params[0].name : '');
+
+            callAndPrint = `
+    sol.${sig.methodName}(${args});
+    
+    cout << "[";
+    for(int i=0; i<${paramToPrint}.size(); i++) cout << ${paramToPrint}[i] << (i<${paramToPrint}.size()-1?",":"");
+    cout << "]" << endl;
+            `;
+        } else if (sig.returnType === 'vector<int>') {
+            callAndPrint = `
+    auto result = sol.${sig.methodName}(${args});
+    cout << "[";
+    for(int i=0; i<result.size(); i++) cout << result[i] << (i<result.size()-1?",":"");
+    cout << "]" << endl;
+            `;
+        } else {
+            callAndPrint = `
+    auto result = sol.${sig.methodName}(${args});
+    cout << boolalpha << result << endl;
+            `;
+        }
 
         return `#include <iostream>
 #include <vector>
@@ -218,9 +240,7 @@ int main() {
     ${inputReading}
     
     Solution sol;
-    auto result = sol.${sig.methodName}(${args});
-    
-    ${printLogic}
+    ${callAndPrint}
     
     return 0;
 }`;
@@ -269,6 +289,121 @@ def main():
 
 if __name__ == "__main__":
     main()`;
+    }
+
+    if (language === 'java') {
+        const args = sig.params.map(p => p.name).join(', ');
+
+        let inputReading = '';
+        sig.params.forEach(p => {
+            if (p.javaType.includes('[]')) {
+                inputReading += `
+        if (!sc.hasNextInt()) return;
+        int n_${p.name} = sc.nextInt();
+        ${p.javaType} ${p.name} = new int[n_${p.name}];
+        for(int i=0; i<n_${p.name}; i++) if (sc.hasNextInt()) ${p.name}[i] = sc.nextInt();
+                `;
+            } else {
+                inputReading += `
+        if (!sc.hasNext()) return;
+        ${p.javaType} ${p.name} = sc.next${p.javaType.charAt(0).toUpperCase() + p.javaType.slice(1)}();
+                `;
+            }
+        });
+
+        let callAndPrint = '';
+        if (sig.returnType === 'void') {
+            const vectorParam = sig.params.find(p => p.type.includes('vector'));
+            const paramToPrint = vectorParam ? vectorParam.name : (sig.params[0] ? sig.params[0].name : '');
+            callAndPrint = `
+        sol.${sig.methodName}(${args});
+        printArray(${paramToPrint});
+            `;
+        } else if (sig.returnType === 'vector<int>') {
+            callAndPrint = `
+        int[] result = sol.${sig.methodName}(${args});
+        printArray(result);
+            `;
+        } else {
+            callAndPrint = `
+        ${sig.javaReturnType} result = sol.${sig.methodName}(${args});
+        System.out.println(result);
+            `;
+        }
+
+        return `import java.util.*;
+import java.io.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Solution sol = new Solution();
+        
+        ${inputReading}
+        
+        ${callAndPrint}
+    }
+    
+    public static void printArray(int[] arr) {
+        System.out.print("[");
+        for(int i=0; i<arr.length; i++) {
+            System.out.print(arr[i] + (i == arr.length-1 ? "" : ","));
+        }
+        System.out.println("]");
+    }
+}
+
+${userCode.replace(/public\s+class\s+Solution/g, 'class Solution')}`;
+    }
+
+    if (language === 'javascript') {
+        const args = sig.params.map(p => p.name).join(', ');
+
+        let inputReading = '';
+        sig.params.forEach(p => {
+            if (p.jsType === 'nums' || p.jsType === 'arr' || p.type.includes('vector')) {
+                inputReading += `
+    const n_${p.name} = parseInt(next());
+    const ${p.name} = [];
+    for(let i=0; i<n_${p.name}; i++) ${p.name}.push(parseInt(next()));
+                `;
+            } else {
+                inputReading += `
+    const ${p.name} = ${p.type === 'int' ? 'parseInt(next())' : 'next()'};
+                `;
+            }
+        });
+
+        let callAndPrint = '';
+        if (sig.returnType === 'void') {
+            const vectorParam = sig.params.find(p => p.type.includes('vector'));
+            const paramToPrint = vectorParam ? vectorParam.name : (sig.params[0] ? sig.params[0].name : '');
+            callAndPrint = `
+    ${sig.methodName}(${args});
+    console.log(JSON.stringify(${paramToPrint}));
+            `;
+        } else {
+            callAndPrint = `
+    const result = ${sig.methodName}(${args});
+    console.log(Array.isArray(result) ? JSON.stringify(result) : result);
+            `;
+        }
+
+        return `const fs = require('fs');
+
+${userCode}
+
+try {
+    const input = fs.readFileSync(0, 'utf-8').trim().split(/\\s+/);
+    let current = 0;
+    function next() { return current < input.length ? input[current++] : null; }
+    
+    ${inputReading}
+    
+    ${callAndPrint}
+} catch (e) {
+    console.error(e);
+}`;
     }
 
     return userCode;

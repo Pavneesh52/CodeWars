@@ -1,19 +1,22 @@
-import fetch from 'node-fetch';
+import axios from 'axios';
 
 const PISTON_API = 'https://emkc.org/api/v2/piston';
 
-// Language mapping for Piston
-const LANGUAGE_MAP = {
-    cpp: { language: 'c++', version: '10.2.0' },
-    java: { language: 'java', version: '15.0.2' },
-    python: { language: 'python', version: '3.10.0' },
-    javascript: { language: 'javascript', version: '18.15.0' }
+const languageMap = {
+    'javascript': { language: 'javascript', version: '18.15.0' },
+    'python': { language: 'python', version: '3.10.0' },
+    'cpp': { language: 'c++', version: '10.2.0' },
+    'java': { language: 'java', version: '15.0.2' },
+    'csharp': { language: 'csharp', version: '6.12.0' },
+    'typescript': { language: 'typescript', version: '5.0.3' },
+    'go': { language: 'go', version: '1.16.2' },
+    'rust': { language: 'rust', version: '1.68.2' },
 };
 
 /**
- * Execute code against multiple inputs
+ * Execute code against multiple inputs using Piston
  * @param {string} language - The programming language (e.g., 'cpp', 'python')
- * @param {string} code - The source code
+ * @param {string} code - The source code (including driver if needed)
  * @param {string[]} inputs - Array of input strings
  * @returns {Promise<Array>} - Array of execution results
  */
@@ -22,53 +25,63 @@ export const executeCode = async (language, code, inputs) => {
         throw new Error('Language and code are required');
     }
 
-    const pistonConfig = LANGUAGE_MAP[language];
-    if (!pistonConfig) {
-        throw new Error('Unsupported language');
+    const langConfig = languageMap[language];
+    if (!langConfig) {
+        throw new Error(`Language '${language}' is not supported`);
     }
 
     // Prepare inputs
     const inputsToRun = (inputs && Array.isArray(inputs) && inputs.length > 0) ? inputs : [''];
+    const results = [];
 
-    const responses = [];
+    for (let i = 0; i < inputsToRun.length; i++) {
+        const input = inputsToRun[i];
 
-    for (const input of inputsToRun) {
-        const response = await fetch(`${PISTON_API}/execute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                language: pistonConfig.language,
-                version: pistonConfig.version,
-                files: [{ content: code }],
-                stdin: input
-            })
-        }).then(res => res.json());
-
-        responses.push(response);
-
-        // Wait 250ms between requests to respect rate limit (5 req/sec)
-        await new Promise(resolve => setTimeout(resolve, 250));
-    }
-
-    // Log first response for debugging
-    if (responses.length > 0) {
-        console.log('Piston Response:', JSON.stringify(responses[0], null, 2));
-    }
-
-    return responses.map((response, index) => {
-        if (response.run) {
-            return {
-                input: inputsToRun[index],
-                output: response.run.stdout.trim(),
-                error: response.run.stderr,
-                code: response.run.code
-            };
-        } else {
-            return {
-                input: inputsToRun[index],
-                error: 'Execution failed',
-                code: 1
-            };
+        // Add small delay to avoid rate limiting (Piston: 5 req/sec)
+        if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 200));
         }
-    });
+
+        try {
+            const response = await axios.post(
+                `${PISTON_API}/execute`,
+                {
+                    language: langConfig.language,
+                    version: langConfig.version,
+                    files: [
+                        {
+                            content: code
+                        }
+                    ],
+                    stdin: typeof input === 'string' ? input : JSON.stringify(input)
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            const result = response.data;
+            const run = result.run || {};
+
+            results.push({
+                input: input,
+                output: run.stdout ? run.stdout.trim() : '',
+                error: run.code !== 0 ? (run.stderr || run.output) : null,
+                executionTime: 0, // Piston doesn't always return time in same format
+                memoryUsage: 0
+            });
+
+        } catch (error) {
+            console.error('Piston Execution Error:', error.message);
+            results.push({
+                input: input,
+                output: '',
+                error: error.message || 'Execution failed'
+            });
+        }
+    }
+
+    return results;
 };
