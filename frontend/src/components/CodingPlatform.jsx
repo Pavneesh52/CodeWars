@@ -406,12 +406,14 @@ const CodingPlatform = () => {
         const data = await response.json();
 
         // Filter submissions for current problem
+        // Filter submissions for current problem
         const problemSubmissions = data.data.filter(sub => {
-          if (sub.problemId === questionId) return true;
-          if (String(sub.problemId) === String(questionId)) return true;
-          if (sub.problemId && sub.problemId.includes && sub.problemId.includes(questionId)) return true;
-          if (questionId && questionId.includes && questionId.includes(String(sub.problemId))) return true;
-          return false;
+          // Handle populated problemId (object) or unpopulated (string)
+          const subProblemId = sub.problemId && sub.problemId._id
+            ? String(sub.problemId._id)
+            : String(sub.problemId);
+
+          return subProblemId === String(questionId);
         });
 
         setSubmissions(problemSubmissions);
