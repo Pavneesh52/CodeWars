@@ -752,6 +752,15 @@ router.post('/', protect, async (req, res) => {
           } else if (!isCorrect) {
             status = 'WRONG_ANSWER';
             if (overallStatus === 'SUCCESS') overallStatus = 'WRONG_ANSWER';
+
+            // Log first failure for debugging
+            if (passedTests === 0 && i === 0) {
+              console.log('--- DEBUG: First Test Case Failed ---');
+              console.log('Input:', input);
+              console.log('Expected:', expected);
+              console.log('Actual:', actualOutput);
+              console.log('-------------------------------------');
+            }
           }
 
           testResults.push({

@@ -94,47 +94,56 @@ export const initializeSocket = (server) => {
             }
 
             if (status === 'SUCCESS') {
-                io.to(roomCode).emit('game_over', { winner: user });
+                // Atomic check-and-update to prevent race conditions
+                // Only proceed if the room is NOT already completed
+                try {
+                    const room = await Room.findOneAndUpdate(
+                        { roomCode, status: { $ne: 'completed' } },
+                        {
+                            $set: {
+                                status: 'completed',
+                                isActive: false,
+                                endedAt: new Date()
+                            }
+                        },
+                        { new: true }
+                    ).populate('participants.user');
 
-                // Save battle result asynchronously
-                (async () => {
-                    try {
-                        console.log(`Attempting to save battle result for room: ${roomCode}`);
-                        const room = await Room.findOne({ roomCode }).populate('participants.user');
-
-                        if (!room) {
-                            console.error(`❌ Room not found for code: ${roomCode}`);
-                            return;
-                        }
-
-                        console.log(`Found room: ${room._id}, Participants: ${room.participants.length}`);
-
-                        const battleResult = new BattleResult({
-                            roomId: room._id,
-                            question: room.question,
-                            winner: user._id,
-                            participants: room.participants.map(p => p.user._id),
-                            scores: room.participants.map(p => ({
-                                user: p.user._id,
-                                passedTests: p.passedTests,
-                                totalTests: p.totalTests
-                            })),
-                            duration: Math.floor((Date.now() - new Date(room.createdAt).getTime()) / 1000) // Approx duration
-                        });
-
-                        const savedResult = await battleResult.save();
-                        console.log(`✅ Battle result saved successfully: ${savedResult._id}`);
-
-                        // Mark room as completed
-                        room.status = 'completed';
-                        room.isActive = false;
-                        await room.save();
-                        console.log(`Room ${roomCode} marked as completed`);
-                    } catch (err) {
-                        console.error('❌ CRITICAL ERROR saving battle result:', err);
-                        console.error('Error details:', JSON.stringify(err, null, 2));
+                    if (!room) {
+                        console.log(`Room ${roomCode} already completed or not found. Ignoring duplicate win.`);
+                        return;
                     }
-                })();
+
+                    console.log(`🏆 Winner declared in ${roomCode}: ${user.name}`);
+                    io.to(roomCode).emit('game_over', { winner: user });
+
+                    // Save battle result asynchronously
+                    (async () => {
+                        try {
+                            const battleResult = new BattleResult({
+                                roomId: room._id,
+                                question: room.question,
+                                winner: user._id,
+                                participants: room.participants.map(p => p.user._id),
+                                scores: room.participants.map(p => ({
+                                    user: p.user._id,
+                                    passedTests: p.passedTests,
+                                    totalTests: p.totalTests
+                                })),
+                                duration: Math.floor((Date.now() - new Date(room.createdAt).getTime()) / 1000)
+                            });
+
+                            const savedResult = await battleResult.save();
+                            console.log(`✅ Battle result saved successfully: ${savedResult._id}`);
+
+                        } catch (err) {
+                            console.error('❌ CRITICAL ERROR saving battle result:', err);
+                        }
+                    })();
+
+                } catch (err) {
+                    console.error('Error handling game over:', err);
+                }
             }
         });
 
