@@ -24,10 +24,17 @@ router.post('/', protect, async (req, res) => {
 
     // Create new room
     const roomCode = await Room.generateRoomCode();
+
+    // Determine max participants based on type
+    const type = req.body.type || '1vs1';
+    const maxParticipants = type === '1vs1' ? 2 : (req.body.maxParticipants || 10);
+
     const room = new Room({
       roomCode,
       question: questionId,
       host: req.user._id,
+      type,
+      maxParticipants,
       participants: [{
         user: req.user._id
       }]
@@ -106,7 +113,7 @@ router.get('/active', protect, async (req, res) => {
           difficulty: room.question?.difficulty || 'Medium',
           language: 'Multi-language', // Rooms support multiple languages
           participants: room.participants.length,
-          maxParticipants: 10,
+          maxParticipants: room.maxParticipants || 10,
           timeLeft: timeLeft,
           status: room.status,
           prize: `${room.question?.difficulty === 'Hard' ? '100' : room.question?.difficulty === 'Medium' ? '50' : '20'} XP`,
@@ -311,6 +318,11 @@ router.post('/:code/join', protect, async (req, res) => {
     const isAlreadyParticipant = room.participants.some(p => p.user.toString() === req.user._id.toString());
 
     if (!isAlreadyParticipant) {
+      // Check if room is full
+      if (room.participants.length >= (room.maxParticipants || 10)) {
+        return res.status(400).json({ success: false, message: 'Room is full' });
+      }
+
       room.participants.push({
         user: req.user._id
       });

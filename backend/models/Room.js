@@ -39,6 +39,15 @@ const roomSchema = new mongoose.Schema({
       type: Date
     }
   }],
+  type: {
+    type: String,
+    enum: ['1vs1', 'multiplayer'],
+    default: '1vs1'
+  },
+  maxParticipants: {
+    type: Number,
+    default: 2
+  },
   isActive: {
     type: Boolean,
     default: true
