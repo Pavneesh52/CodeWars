@@ -36,7 +36,7 @@ const Leaderboard = () => {
                 return;
             }
 
-            const response = await fetch('http://localhost:3001/api/user/leaderboard');
+            const response = await fetch(API_ENDPOINTS.LEADERBOARD);
             const data = await response.json();
 
             if (data.success) {

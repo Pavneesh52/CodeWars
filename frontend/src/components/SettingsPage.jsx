@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 import { useNavigate } from 'react-router-dom';
 
 import Navbar from './Navbar';
@@ -57,7 +58,7 @@ const SettingsPage = () => {
                 return;
             }
 
-            const response = await fetch('http://localhost:3001/api/auth/me', {
+            const response = await fetch(API_ENDPOINTS.ME, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -87,7 +88,7 @@ const SettingsPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/api/users/profile', {
+            const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -128,7 +129,7 @@ const SettingsPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/api/users/password', {
+            const response = await fetch(API_ENDPOINTS.CHANGE_PASSWORD, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,7 +162,7 @@ const SettingsPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/api/users/email', {
+            const response = await fetch(API_ENDPOINTS.CHANGE_EMAIL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -192,7 +193,7 @@ const SettingsPage = () => {
         setNotifications(newPrefs);
         try {
             const token = localStorage.getItem('token');
-            await fetch('http://localhost:3001/api/users/notifications', {
+            await fetch(API_ENDPOINTS.NOTIFICATIONS, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -214,7 +215,7 @@ const SettingsPage = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/api/users/account', {
+            const response = await fetch(API_ENDPOINTS.DELETE_ACCOUNT, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

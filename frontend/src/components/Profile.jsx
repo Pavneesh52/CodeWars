@@ -45,7 +45,7 @@ const Profile = () => {
       }
 
       // Get current user ID from auth
-      const authResponse = await fetch('http://localhost:3001/api/auth/me', {
+      const authResponse = await fetch(API_ENDPOINTS.ME, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -65,7 +65,7 @@ const Profile = () => {
       setUser(prev => ({ ...prev, _id: userId }));
 
       // Fetch user stats
-      const statsResponse = await fetch(`http://localhost:3001/api/user/${userId}/stats`);
+      const statsResponse = await fetch(API_ENDPOINTS.USER_STATS(userId));
       const statsData = await statsResponse.json();
       console.log('📊 Stats API Response:', statsData);
 
@@ -89,7 +89,7 @@ const Profile = () => {
 
       // Fetch solved problems from user-solved collection
       try {
-        const solvedResponse = await fetch(`http://localhost:3001/api/user/${userId}/solved?limit=10`);
+        const solvedResponse = await fetch(`${API_ENDPOINTS.USER_SOLVED(userId)}?limit=10`);
         const solvedData = await solvedResponse.json();
         console.log('📚 Solved Problems API Response:', solvedData);
 
@@ -134,7 +134,7 @@ const Profile = () => {
     setUploading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/upload/avatar', {
+      const response = await fetch(API_ENDPOINTS.UPLOAD_AVATAR, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

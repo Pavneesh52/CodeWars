@@ -44,7 +44,7 @@ const CodingPlatform = () => {
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/auth/me', {
+      const response = await fetch(API_ENDPOINTS.ME, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -153,7 +153,7 @@ const CodingPlatform = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:3001/api/problems/${questionId}`);
+      const response = await fetch(`${API_ENDPOINTS.PROBLEMS}/${questionId}`);
       const data = await response.json();
       console.log('API Response:', data);
       if (data.success) {
@@ -222,7 +222,7 @@ const CodingPlatform = () => {
 
       let response;
       try {
-        response = await fetch('http://localhost:3001/api/code/execute', {
+        response = await fetch(API_ENDPOINTS.EXECUTE, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -326,7 +326,7 @@ const CodingPlatform = () => {
 
       // Send submission to backend for verification
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/submissions', {
+      const response = await fetch(API_ENDPOINTS.SUBMISSIONS, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -389,7 +389,7 @@ const CodingPlatform = () => {
     try {
       setLoadingSubmissions(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/submissions', {
+      const response = await fetch(API_ENDPOINTS.SUBMISSIONS, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 
+import { SERVER_URL } from '../config/api';
+
 const SocketContext = createContext();
 
 export const useSocket = () => {
@@ -12,7 +14,7 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         // Initialize socket connection
-        const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001', {
+        const newSocket = io(SERVER_URL, {
             withCredentials: true,
             autoConnect: true,
             reconnection: true,

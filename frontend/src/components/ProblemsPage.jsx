@@ -28,7 +28,7 @@ const ProblemsPage = () => {
 
   const fetchTopics = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/problems');
+      const response = await fetch(API_ENDPOINTS.PROBLEMS);
       const data = await response.json();
       if (data.success && data.data) {
         // Extract unique topics from problems
@@ -43,7 +43,7 @@ const ProblemsPage = () => {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      let url = 'http://localhost:3001/api/problems';
+      let url = API_ENDPOINTS.PROBLEMS;
 
       // Fetch all problems first
       const response = await fetch(url);
