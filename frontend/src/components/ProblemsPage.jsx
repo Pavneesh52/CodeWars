@@ -125,8 +125,8 @@ const ProblemsPage = () => {
         </div>
 
         {/* Filters Section */}
-        <div className="bg-[#0f1425] border border-gray-700 rounded-xl p-6 mb-6">
-          <div className="grid grid-cols-3 gap-4">
+        <div className="bg-[#0f1425] border border-gray-700 rounded-xl p-4 md:p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div>
               <label className="block text-sm font-semibold text-gray-300 mb-2">Search</label>

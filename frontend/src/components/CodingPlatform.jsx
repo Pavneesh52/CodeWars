@@ -492,60 +492,61 @@ const CodingPlatform = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e27] via-[#0f1535] to-[#1a2040] text-white flex flex-col h-screen md:overflow-hidden overflow-auto">
       {/* Header */}
       <nav className="border-b border-gray-800 bg-[#0a0e27]/80 backdrop-blur-sm sticky top-0 z-20 flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
               <button
                 onClick={() => navigate(-1)}
                 className="text-gray-400 hover:text-white transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl font-bold">{question.title}</h1>
+              <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                <h1 className="text-sm md:text-xl font-bold truncate">{question.title}</h1>
                 {isSolved && (
-                  <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                  <span className="hidden md:flex bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-semibold items-center gap-1">
                     ✅ Solved
                   </span>
                 )}
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
+              <span className={`hidden md:block px-3 py-1 rounded-full text-xs font-semibold ${question.difficulty === 'Easy' ? 'bg-green-500/20 text-green-400' :
                 question.difficulty === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
                   'bg-red-500/20 text-red-400'
                 }`}>
                 {question.difficulty}
               </span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 ml-2">
               {isSpectator ? (
-                <div className="bg-purple-500/20 text-purple-300 border border-purple-500/50 px-4 py-2 rounded-lg text-sm font-semibold animate-pulse flex items-center gap-2">
-                  <span>👁️</span> Spectating Mode
+                <div className="bg-purple-500/20 text-purple-300 border border-purple-500/50 px-3 py-1 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-semibold animate-pulse flex items-center gap-2">
+                  <span>👁️</span> <span className="hidden md:inline">Spectating Mode</span>
                 </div>
               ) : (
                 <>
                   <button
                     onClick={runCode}
                     disabled={running || isSolved}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1.5 md:px-6 md:py-2 rounded-lg transition-colors font-semibold flex items-center gap-2 text-xs md:text-sm"
                     title="Keyboard shortcut: Ctrl+Enter (Cmd+Enter on Mac)"
                   >
-                    {running ? 'Running...' : (
+                    {running ? '...' : (
                       <>
-                        Run Code
-                        <span className="text-xs opacity-60">(Ctrl+↵)</span>
+                        <span className="md:hidden">Run</span>
+                        <span className="hidden md:inline">Run Code</span>
+                        <span className="hidden lg:inline text-xs opacity-60">(Ctrl+↵)</span>
                       </>
                     )}
                   </button>
                   <button
                     onClick={submitCode}
                     disabled={running || isSolved}
-                    className="bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                    className="bg-cyan-500 hover:bg-cyan-600 disabled:bg-cyan-800 disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 py-1.5 md:px-6 md:py-2 rounded-lg transition-colors font-semibold flex items-center gap-2 text-xs md:text-sm"
                     title="Keyboard shortcut: Ctrl+S (Cmd+S on Mac)"
                   >
                     Submit
-                    <span className="text-xs opacity-60">(Ctrl+S)</span>
+                    <span className="hidden lg:inline text-xs opacity-60">(Ctrl+S)</span>
                   </button>
                 </>
               )}
@@ -553,9 +554,9 @@ const CodingPlatform = () => {
                 <div className="relative">
                   <button
                     onClick={() => setShowParticipants(!showParticipants)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg transition-colors font-semibold flex items-center gap-2 text-xs md:text-sm"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0a6 6 0 11-12 0 6 6 0 0112 0z" />
                     </svg>
                     {room.participants.length}

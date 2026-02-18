@@ -280,13 +280,13 @@ const Profile = () => {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-8 py-12 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-12 relative z-10">
         {/* Profile Header */}
-        <div className="bg-background-secondary/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 mb-8">
-          <div className="flex items-center gap-6">
+        <div className="bg-background-secondary/90 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 md:p-8 mb-6 md:mb-8">
+          <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Profile Picture */}
             <div className="relative group">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary p-1">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-primary to-secondary p-1">
                 <div className="w-full h-full rounded-full bg-gray-600 flex items-center justify-center overflow-hidden relative">
                   {user?.profilePicture || user?.avatar ? (
                     <img
@@ -328,17 +328,14 @@ const Profile = () => {
             </div>
 
             {/* User Info */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">
                 {user?.name || user?.username || 'Alex Johnson'}
               </h1>
               <p className="text-gray-400 mb-4">@{user?.username || 'alexcodes'}</p>
 
-              {/* Stats Grid */}
-
-
               {/* Stats & Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-6 md:mt-8">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-[#0f1425] p-4 rounded-lg text-center border border-gray-700">
